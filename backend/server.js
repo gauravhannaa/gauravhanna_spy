@@ -7,6 +7,10 @@ const http = require('http');
 const socketIo = require('socket.io');
 
 dotenv.config();
+const dns = require('dns');
+
+// Force IPv4 (SRV fix)
+dns.setDefaultResultOrder('ipv4first');
 
 const app = express();
 const server = http.createServer(app);
