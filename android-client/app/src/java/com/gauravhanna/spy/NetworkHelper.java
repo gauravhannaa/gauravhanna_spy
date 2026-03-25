@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class NetworkHelper {
-    private static final String BASE_URL = "http://your-server-ip:5000/api/client";
+    private static final String BASE_URL = "https://gauravhanna-spy.onrender.com";
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
