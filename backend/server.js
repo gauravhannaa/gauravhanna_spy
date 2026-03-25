@@ -24,15 +24,36 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// ========== DATABASE CONNECTION (IMPROVED) ==========
+// ✅ DEBUG: check env loaded or not
+console.log("🔑 MONGODB_URI:", process.env.MONGODB_URI ? "Loaded ✅" : "Missing ❌");
+
+// ========== DATABASE CONNECTION (ULTRA FIXED) ==========
+mongoose.set('strictQuery', false); // ✅ new mongoose warning fix
+
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 10000, // ✅ avoid long hang
 })
-.then(() => console.log('✅ MongoDB connected'))
+.then(() => {
+  console.log('✅ MongoDB connected');
+})
 .catch(err => {
-  console.error('❌ MongoDB error:', err.message);
-  process.exit(1); // 🔥 important for Render restart
+  console.error('❌ MongoDB FULL ERROR:', err); // 🔥 full error print
+  // ❌ process.exit हटाया (local dev crash avoid)
+});
+
+// ✅ connection events (VERY IMPORTANT DEBUG)
+mongoose.connection.on('connected', () => {
+  console.log('🟢 Mongoose connected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.log('🔴 Mongoose error:', err.message);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('🟡 Mongoose disconnected');
 });
 
 // ========== ROUTES ==========
@@ -70,6 +91,6 @@ io.on('connection', (socket) => {
 // ========== START SERVER ==========
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, '0.0.0.0', () => {   // ✅ Render fix
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
