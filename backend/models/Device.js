@@ -6,6 +6,8 @@ const DeviceSchema = new mongoose.Schema({
   deviceName: String,
   deviceModel: String,
   androidVersion: String,
+  battery: Number,
+  networkStatus: String,
   isActive: { type: Boolean, default: true },
   lastSeen: Date,
   createdAt: { type: Date, default: Date.now }

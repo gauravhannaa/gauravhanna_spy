@@ -9,8 +9,12 @@ const socketIo = require('socket.io');
 dotenv.config();
 const dns = require('dns');
 
-// Force IPv4 (SRV fix)
-dns.setDefaultResultOrder('ipv4first');
+// 🔥 force IPv4 (with fallback for older Node versions)
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch (err) {
+  console.warn('⚠️ dns.setDefaultResultOrder not supported, skipping');
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -31,10 +35,22 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // ✅ DEBUG: check env loaded or not
 console.log("🔑 MONGODB_URI:", process.env.MONGODB_URI ? "Loaded ✅" : "Missing ❌");
 
+// ✅ DEBUG: check LOCAL URI
+console.log("🔑 MONGODB_LOCAL:", process.env.MONGODB_LOCAL ? "Loaded ✅" : "Missing ❌");
+
 // ========== DATABASE CONNECTION (ULTRA FIXED) ==========
 mongoose.set('strictQuery', false); // ✅ new mongoose warning fix
 
-mongoose.connect(process.env.MONGODB_URI, {
+// 🔥🔥 AUTO SWITCH (IMPORTANT) + FALLBACK
+const mongoURI = process.env.NODE_ENV === 'production'
+  ? process.env.MONGODB_URI
+  : process.env.MONGODB_LOCAL || 'mongodb://localhost:27017/mydb'; // ← added fallback
+
+console.log("🌍 ENV:", process.env.NODE_ENV || "development");
+console.log("📡 Using DB:", process.env.NODE_ENV === 'production' ? "SRV (Render)" : "Normal (Local)");
+
+// Connect with better error logging
+mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 10000, // ✅ avoid long hang
@@ -43,8 +59,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.log('✅ MongoDB connected');
 })
 .catch(err => {
-  console.error('❌ MongoDB FULL ERROR:', err); // 🔥 full error print
-  // ❌ process.exit हटाया (local dev crash avoid)
+  console.error('❌ MongoDB FULL ERROR:', err);
+  console.error('🔧 Check your connection string and network access');
 });
 
 // ✅ connection events (VERY IMPORTANT DEBUG)
@@ -61,10 +77,19 @@ mongoose.connection.on('disconnected', () => {
 });
 
 // ========== ROUTES ==========
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/client', require('./routes/client'));
-app.use('/api/dashboard', require('./routes/dashboard'));
-app.use('/api/data', require('./routes/data'));
+// Safely require routes (skip if file missing)
+const routeFiles = ['auth', 'client', 'dashboard', 'data'];
+routeFiles.forEach(route => {
+  try {
+    app.use(`/api/${route}`, require(`./routes/${route}`));
+  } catch (err) {
+    console.error(`❌ Failed to load route /api/${route}:`, err.message);
+    // Optional: add a dummy route to avoid 404s
+    app.use(`/api/${route}`, (req, res) => {
+      res.status(503).json({ error: `Route ${route} not available` });
+    });
+  }
+});
 
 // ========== STATIC FILES (FRONTEND) ==========
 const frontendPath = path.join(__dirname, '../frontend');
@@ -72,13 +97,14 @@ console.log('📁 Serving static files from:', frontendPath);
 
 app.use(express.static(frontendPath));
 
-// ✅ Better fallback (no crash)
+// ✅ Better fallback (no crash) with error handling
 app.get('*', (req, res, next) => {
   if (req.originalUrl.startsWith('/api')) return next();
 
   res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
     if (err) {
-      res.status(500).send("Error loading frontend");
+      console.error('⚠️ Error serving index.html:', err.message);
+      res.status(500).send("Error loading frontend – check that frontend folder exists and contains index.html");
     }
   });
 });
