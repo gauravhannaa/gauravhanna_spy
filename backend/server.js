@@ -5,16 +5,13 @@ const dotenv = require('dotenv');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
-const adminRoutes = require('./routes/adminRoutes');
-
-app.use('/api/admin', adminRoutes);
 
 dotenv.config();
 const dns = require('dns');
 
 // 🔥 force IPv4 (with fallback for older Node versions)
 try {
-  dns.setDefaultResultOrder('ipv4first');s
+  dns.setDefaultResultOrder('ipv4first');  // ✅ fixed: removed extra 's'
 } catch (err) {
   console.warn('⚠️ dns.setDefaultResultOrder not supported, skipping');
 }
@@ -37,8 +34,6 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // ✅ DEBUG: check env loaded or not
 console.log("🔑 MONGODB_URI:", process.env.MONGODB_URI ? "Loaded ✅" : "Missing ❌");
-
-// ✅ DEBUG: check LOCAL URI
 console.log("🔑 MONGODB_LOCAL:", process.env.MONGODB_LOCAL ? "Loaded ✅" : "Missing ❌");
 
 // ========== DATABASE CONNECTION (ULTRA FIXED) ==========
@@ -81,7 +76,8 @@ mongoose.connection.on('disconnected', () => {
 
 // ========== ROUTES ==========
 // Safely require routes (skip if file missing)
-const routeFiles = ['auth', 'client', 'dashboard', 'data'];
+const routeFiles = ['auth', 'client', 'dashboard', 'data', 'admin']; // ✅ added 'admin'
+
 routeFiles.forEach(route => {
   try {
     app.use(`/api/${route}`, require(`./routes/${route}`));
