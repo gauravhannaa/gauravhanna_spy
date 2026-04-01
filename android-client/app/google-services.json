@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "453087938393",
+    "project_id": "service-apk-cdc96",
+    "storage_bucket": "service-apk-cdc96.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:453087938393:android:cfe989de3afbe61518ee48",
+        "android_client_info": {
+          "package_name": "com.gauravhanna.spy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5S-XZI16b2IjtjFilJ7HYOfBE4BP2iwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
