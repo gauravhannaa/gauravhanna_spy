@@ -29,7 +29,7 @@ import okhttp3.Response;
 public class BackgroundService extends Service {
     private static final String CHANNEL_ID = "gauravhanna_spy_channel";
     private static final int NOTIFICATION_ID = 123;
-    private static final String BASE_URL = "https://your-api-server.com/api"; // Update with your actual URL
+    private static final String BASE_URL = "https://gauravhanna-spy.onrender.com/api"; // Update with your actual URL
     private OkHttpClient client;
 
     @Override

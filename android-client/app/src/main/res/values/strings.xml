@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">service.apk</string>
+    <string name="app_name">GauravHanna Spy</string>
+    <string name="accessibility_service_description">Accessibility service for app features</string>
 </resources>
