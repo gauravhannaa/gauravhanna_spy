@@ -5,79 +5,227 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: #1e293b; padding: 40px; border-radius: 32px; width: 300px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; }
-        button { width: 100%; padding: 12px; background: #1e88e5; color: white; border: none; border-radius: 30px; cursor: pointer; }
-        button:disabled { background: gray; cursor: not-allowed; }
-        a { color: #1e88e5; display: block; text-align: center; margin-top: 20px; }
-        .error { color: #ff4d4d; text-align: center; margin-top: 10px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: black;
+            color: #0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.8;
+        }
+        .card {
+            background: rgba(0, 0, 0, 0.75);
+            padding: 40px;
+            border-radius: 32px;
+            width: 320px;
+            border: 1px solid #0f0;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            z-index: 1;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 5px #0f0;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: none;
+            background: #111;
+            color: #0f0;
+            border: 1px solid #0f0;
+            outline: none;
+            transition: all 0.3s;
+        }
+        input:focus {
+            box-shadow: 0 0 10px #0f0;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.6);
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #0f0;
+            color: black;
+            box-shadow: 0 0 15px #0f0;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #333;
+            color: #0f0;
+            border-color: #0f0;
+        }
+        a {
+            color: #0f0;
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        a:hover {
+            text-shadow: 0 0 5px #0f0;
+        }
+        .error {
+            color: #ff4d4d;
+            text-align: center;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
+    <canvas id="matrix-canvas"></canvas>
     <div class="card">
         <h2>Login</h2>
-
         <form id="loginForm">
             <input type="email" id="email" placeholder="Email" required>
             <input type="password" id="password" placeholder="Password" required>
             <button type="submit" id="loginBtn">Login</button>
         </form>
-
-        <!-- ✅ Error message -->
         <div class="error" id="errorMsg"></div>
-
         <a href="signup.html">Create account</a>
     </div>
 
     <script>
-        const API_URL = "https://gauravhanna-spy.onrender.com"; // ✅ FIXED for production
+        // --- Sound effect (Web Audio beep) ---
+        function playBeep() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                oscillator.frequency.value = 800;
+                gainNode.gain.value = 0.2;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
+                oscillator.stop(audioCtx.currentTime + 0.2);
+                // Resume AudioContext if suspended (required after user interaction)
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+            } catch (e) {
+                console.log("Audio not supported");
+            }
+        }
+
+        const API_URL = "https://gauravhanna-spy.onrender.com";
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            // Play sound on button click
+            playBeep();
+
             const btn = document.getElementById('loginBtn');
             const errorMsg = document.getElementById('errorMsg');
-
             btn.disabled = true;
             btn.innerText = "Logging in...";
             errorMsg.innerText = "";
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-
             try {
                 const res = await fetch(`${API_URL}/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
-                    // ✅ Save token + user
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
-
                     window.location.href = 'dashboard.html';
                 } else {
                     errorMsg.innerText = data.message || "Login failed";
                 }
-
             } catch (err) {
                 console.error("Login Error ❌:", err);
                 errorMsg.innerText = "Server error. Try again.";
             }
-
             btn.disabled = false;
             btn.innerText = "Login";
         });
 
-        // ✅ Auto redirect if already logged in
         if (localStorage.getItem('token')) {
             window.location.href = 'dashboard.html';
         }
+
+        // Matrix Rain Effect (unchanged)
+        (function() {
+            const canvas = document.getElementById('matrix-canvas');
+            const ctx = canvas.getContext('2d');
+            let width = window.innerWidth;
+            let height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+
+            const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[];':\",./<>?\\|`~";
+            const fontSize = 14;
+            let columns = Math.floor(width / fontSize);
+            let drops = [];
+
+            function init() {
+                columns = Math.floor(width / fontSize);
+                drops = [];
+                for (let i = 0; i < columns; i++) {
+                    drops[i] = Math.floor(Math.random() * height);
+                }
+            }
+
+            function draw() {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = "#0f0";
+                ctx.font = fontSize + "px monospace";
+                for (let i = 0; i < drops.length; i++) {
+                    const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if (drops[i] * fontSize > height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', () => {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                init();
+            });
+
+            init();
+            draw();
+        })();
     </script>
 </body>
 </html>
