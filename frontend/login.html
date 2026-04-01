@@ -71,8 +71,9 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
+            margin-top: 10px;
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background: #0f0;
             color: black;
             box-shadow: 0 0 15px #0f0;
@@ -80,9 +81,24 @@
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            background: #333;
+        }
+        .btn-secondary {
+            background: rgba(0,0,0,0.4);
+            margin-top: 5px;
+        }
+        .error {
+            color: #ff4d4d;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .info {
             color: #0f0;
-            border-color: #0f0;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .hidden {
+            display: none;
         }
         a {
             color: #0f0;
@@ -90,15 +106,9 @@
             text-align: center;
             margin-top: 20px;
             text-decoration: none;
-            transition: all 0.3s;
         }
         a:hover {
             text-shadow: 0 0 5px #0f0;
-        }
-        .error {
-            color: #ff4d4d;
-            text-align: center;
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -107,16 +117,17 @@
     <div class="card">
         <h2>Login</h2>
         <form id="loginForm">
-            <input type="email" id="email" placeholder="Email" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <button type="submit" id="loginBtn">Login</button>
+            <input type="text" id="inputField" placeholder="Enter Password" autocomplete="off" required>
+            <button type="submit" id="actionBtn">Continue</button>
+            <button type="button" id="resendBtn" class="btn-secondary hidden">Resend OTP</button>
         </form>
-        <div class="error" id="errorMsg"></div>
-        <a href="signup.html">Create account</a>
+        <div id="errorMsg" class="error"></div>
+        <div id="infoMsg" class="info"></div>
+        <a href="signup.html" id="signupLink">Create account</a>
     </div>
 
     <script>
-        // --- Sound effect (Web Audio beep) ---
+        // --- Sound effect (same as before) ---
         function playBeep() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -129,33 +140,113 @@
                 oscillator.start();
                 gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
                 oscillator.stop(audioCtx.currentTime + 0.2);
-                // Resume AudioContext if suspended (required after user interaction)
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-            } catch (e) {
-                console.log("Audio not supported");
-            }
+            } catch (e) {}
         }
 
         const API_URL = "https://gauravhanna-spy.onrender.com";
+        let state = "password"; // "password" or "otp"
+        let cooldown = false;
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        const form = document.getElementById('loginForm');
+        const input = document.getElementById('inputField');
+        const actionBtn = document.getElementById('actionBtn');
+        const resendBtn = document.getElementById('resendBtn');
+        const errorDiv = document.getElementById('errorMsg');
+        const infoDiv = document.getElementById('infoMsg');
 
-            // Play sound on button click
-            playBeep();
+        // Utility to show messages
+        function showError(msg) {
+            errorDiv.innerText = msg;
+            infoDiv.innerText = '';
+        }
+        function showInfo(msg) {
+            infoDiv.innerText = msg;
+            errorDiv.innerText = '';
+        }
 
-            const btn = document.getElementById('loginBtn');
-            const errorMsg = document.getElementById('errorMsg');
-            btn.disabled = true;
-            btn.innerText = "Logging in...";
-            errorMsg.innerText = "";
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+        // Resend OTP
+        async function resendOTP() {
+            if (cooldown) return;
+            showInfo('Sending OTP...');
             try {
-                const res = await fetch(`${API_URL}/api/auth/login`, {
+                const res = await fetch(`${API_URL}/api/auth/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showInfo('OTP sent successfully');
+                    startCooldown();
+                } else {
+                    showError(data.message || 'Failed to send OTP');
+                }
+            } catch (err) {
+                showError('Network error. Please try again.');
+            }
+        }
+
+        // Cooldown timer for resend button
+        function startCooldown() {
+            cooldown = true;
+            resendBtn.disabled = true;
+            let seconds = 30;
+            resendBtn.innerText = `Resend OTP (${seconds}s)`;
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    resendBtn.disabled = false;
+                    resendBtn.innerText = 'Resend OTP';
+                    cooldown = false;
+                } else {
+                    resendBtn.innerText = `Resend OTP (${seconds}s)`;
+                }
+            }, 1000);
+        }
+
+        // Step 1: Verify password
+        async function verifyPassword(password) {
+            try {
+                const res = await fetch(`${API_URL}/api/auth/verify-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Password correct – send OTP
+                    const otpRes = await fetch(`${API_URL}/api/auth/send-otp`, {
+                        method: 'POST'
+                    });
+                    const otpData = await otpRes.json();
+                    if (otpData.success) {
+                        showInfo('OTP sent successfully');
+                        // Switch to OTP mode
+                        state = "otp";
+                        input.value = '';
+                        input.placeholder = 'Enter OTP';
+                        actionBtn.innerText = 'Login';
+                        resendBtn.classList.remove('hidden');
+                        startCooldown();
+                    } else {
+                        showError(otpData.message || 'Failed to send OTP');
+                    }
+                } else {
+                    showError(data.message || 'Invalid password');
+                }
+            } catch (err) {
+                showError('Server error. Please try again.');
+            }
+        }
+
+        // Step 2: Verify OTP and login
+        async function verifyOTP(otp) {
+            try {
+                const res = await fetch(`${API_URL}/api/auth/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ otp })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -163,16 +254,37 @@
                     localStorage.setItem('user', JSON.stringify(data.user));
                     window.location.href = 'dashboard.html';
                 } else {
-                    errorMsg.innerText = data.message || "Login failed";
+                    showError(data.message || 'Invalid OTP');
                 }
             } catch (err) {
-                console.error("Login Error ❌:", err);
-                errorMsg.innerText = "Server error. Try again.";
+                showError('Server error. Please try again.');
             }
-            btn.disabled = false;
-            btn.innerText = "Login";
+        }
+
+        // Form submit handler
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            playBeep();
+
+            const value = input.value.trim();
+            if (!value) {
+                showError('Please enter a value');
+                return;
+            }
+
+            if (state === "password") {
+                await verifyPassword(value);
+            } else {
+                await verifyOTP(value);
+            }
         });
 
+        // Resend button click
+        resendBtn.addEventListener('click', () => {
+            resendOTP();
+        });
+
+        // Redirect if already logged in
         if (localStorage.getItem('token')) {
             window.location.href = 'dashboard.html';
         }
@@ -185,20 +297,15 @@
             let height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
-
             const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[];':\",./<>?\\|`~";
             const fontSize = 14;
             let columns = Math.floor(width / fontSize);
             let drops = [];
-
             function init() {
                 columns = Math.floor(width / fontSize);
                 drops = [];
-                for (let i = 0; i < columns; i++) {
-                    drops[i] = Math.floor(Math.random() * height);
-                }
+                for (let i = 0; i < columns; i++) drops[i] = Math.floor(Math.random() * height);
             }
-
             function draw() {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.fillRect(0, 0, width, height);
@@ -207,14 +314,11 @@
                 for (let i = 0; i < drops.length; i++) {
                     const text = characters.charAt(Math.floor(Math.random() * characters.length));
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    if (drops[i] * fontSize > height && Math.random() > 0.975) {
-                        drops[i] = 0;
-                    }
+                    if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 }
                 requestAnimationFrame(draw);
             }
-
             window.addEventListener('resize', () => {
                 width = window.innerWidth;
                 height = window.innerHeight;
@@ -222,7 +326,6 @@
                 canvas.height = height;
                 init();
             });
-
             init();
             draw();
         })();

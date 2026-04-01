@@ -5,13 +5,16 @@ const dotenv = require('dotenv');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
+const adminRoutes = require('./routes/adminRoutes');
+
+app.use('/api/admin', adminRoutes);
 
 dotenv.config();
 const dns = require('dns');
 
 // 🔥 force IPv4 (with fallback for older Node versions)
 try {
-  dns.setDefaultResultOrder('ipv4first');
+  dns.setDefaultResultOrder('ipv4first');s
 } catch (err) {
   console.warn('⚠️ dns.setDefaultResultOrder not supported, skipping');
 }

