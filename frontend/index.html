@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Matrix Background */
         * {
             margin: 0;
             padding: 0;
@@ -22,7 +21,6 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
-        /* Canvas background */
         #matrix-canvas {
             position: fixed;
             top: 0;
@@ -36,7 +34,7 @@
             max-width: 600px;
             margin: auto;
             background: rgba(0, 0, 0, 0.75);
-            padding: 30px;
+            padding: 40px;
             border-radius: 20px;
             border: 1px solid #0f0;
             backdrop-filter: blur(5px);
@@ -45,78 +43,127 @@
         h1 {
             font-size: 2.5rem;
             text-shadow: 0 0 5px #0f0;
+            margin-bottom: 20px;
         }
-        p {
-            margin: 20px 0;
+        .tagline {
+            margin-bottom: 30px;
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
         }
         a {
             color: #0f0;
             text-decoration: none;
-            margin: 10px;
-            display: inline-block;
-            padding: 12px 24px;
+            padding: 12px 30px;
             border-radius: 30px;
             background: rgba(0, 0, 0, 0.6);
             border: 1px solid #0f0;
             transition: all 0.3s ease;
+            font-weight: 600;
         }
         a:hover {
             background: #0f0;
             color: black;
             box-shadow: 0 0 15px #0f0;
         }
+        .features {
+            margin-top: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .feature {
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid #0f0;
+        }
+        .status {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            color: #0f0;
+        }
     </style>
 </head>
 <body>
     <canvas id="matrix-canvas"></canvas>
     <div class="container">
-        <h1>GauravHanna Spy</h1>
-        <p>Advanced phone monitoring dashboard</p>
-        <a href="login.html">Login</a>
-        <a href="signup.html">Sign Up</a>
+        <h1>🔍 GauravHanna Spy</h1>
+        <div class="tagline">Advanced Phone Monitoring Dashboard</div>
+        <div class="btn-group">
+            <a href="login.html">🔐 Login</a>
+            <a href="signup.html">📝 Sign Up</a>
+        </div>
+        <div class="features">
+            <div class="feature">📍 Live Location</div>
+            <div class="feature">📞 Call Logs</div>
+            <div class="feature">💬 Messages</div>
+            <div class="feature">📸 Screenshots</div>
+            <div class="feature">⌨️ Keylogger</div>
+            <div class="feature">🎙️ Call Recording</div>
+        </div>
+        <div class="status" id="serverStatus">Checking server status...</div>
     </div>
 
     <script>
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const res = await fetch('https://gauravhanna-spy.onrender.com/api/health');
+                const data = await res.json();
+                const statusDiv = document.getElementById('serverStatus');
+                if (data.status === 'OK') {
+                    statusDiv.innerHTML = '✅ Server Online | ' + new Date().toLocaleString();
+                    statusDiv.style.color = '#0f0';
+                } else {
+                    statusDiv.innerHTML = '⚠️ Server Response: ' + JSON.stringify(data);
+                }
+            } catch (err) {
+                document.getElementById('serverStatus').innerHTML = '❌ Server Offline or Starting...';
+                document.getElementById('serverStatus').style.color = '#ff4d4d';
+            }
+        }
+        
+        checkServerStatus();
+        setInterval(checkServerStatus, 30000);
+
         // Matrix Rain Effect
         (function() {
             const canvas = document.getElementById('matrix-canvas');
             const ctx = canvas.getContext('2d');
-
             let width = window.innerWidth;
             let height = window.innerHeight;
             canvas.width = width;
             canvas.height = height;
-
             const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}[];':\",./<>?\\|`~";
             const fontSize = 14;
             let columns = Math.floor(width / fontSize);
             let drops = [];
-
             function init() {
                 columns = Math.floor(width / fontSize);
                 drops = [];
-                for (let i = 0; i < columns; i++) {
-                    drops[i] = Math.floor(Math.random() * height);
-                }
+                for (let i = 0; i < columns; i++) drops[i] = Math.floor(Math.random() * height);
             }
-
             function draw() {
                 ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
                 ctx.fillRect(0, 0, width, height);
                 ctx.fillStyle = "#0f0";
                 ctx.font = fontSize + "px monospace";
-
                 for (let i = 0; i < drops.length; i++) {
                     const text = characters.charAt(Math.floor(Math.random() * characters.length));
                     ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    if (drops[i] * fontSize > height && Math.random() > 0.975) {
-                        drops[i] = 0;
-                    }
+                    if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 }
                 requestAnimationFrame(draw);
             }
-
             window.addEventListener('resize', () => {
                 width = window.innerWidth;
                 height = window.innerHeight;
@@ -124,7 +171,6 @@
                 canvas.height = height;
                 init();
             });
-
             init();
             draw();
         })();

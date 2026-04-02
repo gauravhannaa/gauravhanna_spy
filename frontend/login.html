@@ -127,7 +127,6 @@
     </div>
 
     <script>
-        // --- Sound effect (same as before) ---
         function playBeep() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -145,7 +144,7 @@
         }
 
         const API_URL = "https://gauravhanna-spy.onrender.com";
-        let state = "password"; // "password" or "otp"
+        let state = "password";
         let cooldown = false;
 
         const form = document.getElementById('loginForm');
@@ -155,7 +154,6 @@
         const errorDiv = document.getElementById('errorMsg');
         const infoDiv = document.getElementById('infoMsg');
 
-        // Utility to show messages
         function showError(msg) {
             errorDiv.innerText = msg;
             infoDiv.innerText = '';
@@ -165,7 +163,6 @@
             errorDiv.innerText = '';
         }
 
-        // Resend OTP
         async function resendOTP() {
             if (cooldown) return;
             showInfo('Sending OTP...');
@@ -186,7 +183,6 @@
             }
         }
 
-        // Cooldown timer for resend button
         function startCooldown() {
             cooldown = true;
             resendBtn.disabled = true;
@@ -205,7 +201,6 @@
             }, 1000);
         }
 
-        // Step 1: Verify password
         async function verifyPassword(password) {
             try {
                 const res = await fetch(`${API_URL}/api/auth/verify-password`, {
@@ -215,14 +210,12 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    // Password correct – send OTP
                     const otpRes = await fetch(`${API_URL}/api/auth/send-otp`, {
                         method: 'POST'
                     });
                     const otpData = await otpRes.json();
                     if (otpData.success) {
                         showInfo('OTP sent successfully');
-                        // Switch to OTP mode
                         state = "otp";
                         input.value = '';
                         input.placeholder = 'Enter OTP';
@@ -240,7 +233,6 @@
             }
         }
 
-        // Step 2: Verify OTP and login
         async function verifyOTP(otp) {
             try {
                 const res = await fetch(`${API_URL}/api/auth/verify-otp`, {
@@ -261,7 +253,6 @@
             }
         }
 
-        // Form submit handler
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             playBeep();
@@ -279,17 +270,15 @@
             }
         });
 
-        // Resend button click
         resendBtn.addEventListener('click', () => {
             resendOTP();
         });
 
-        // Redirect if already logged in
         if (localStorage.getItem('token')) {
             window.location.href = 'dashboard.html';
         }
 
-        // Matrix Rain Effect (unchanged)
+        // Matrix Rain Effect
         (function() {
             const canvas = document.getElementById('matrix-canvas');
             const ctx = canvas.getContext('2d');

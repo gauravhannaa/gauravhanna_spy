@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        /* Same Matrix styles as login.html */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -114,6 +113,16 @@
             const password = document.getElementById('password').value;
             const phone = document.getElementById('phone').value;
 
+            if (!password || password.length < 6) {
+                document.getElementById('errorMsg').innerText = 'Password must be at least 6 characters';
+                return;
+            }
+
+            if (!phone || phone.length < 10) {
+                document.getElementById('errorMsg').innerText = 'Please enter a valid phone number with country code';
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/api/auth/setup`, {
                     method: 'POST',
@@ -122,17 +131,20 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById('infoMsg').innerText = 'Settings saved. Please restart the server.';
+                    document.getElementById('infoMsg').innerText = '✅ Settings saved! Please login.';
                     document.getElementById('errorMsg').innerText = '';
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
                 } else {
-                    document.getElementById('errorMsg').innerText = data.message || 'Error';
+                    document.getElementById('errorMsg').innerText = data.message || 'Error saving settings';
                 }
             } catch (err) {
-                document.getElementById('errorMsg').innerText = 'Network error.';
+                document.getElementById('errorMsg').innerText = 'Network error. Please try again.';
             }
         });
 
-        // Matrix Rain (same as login)
+        // Matrix Rain Effect
         (function() {
             const canvas = document.getElementById('matrix-canvas');
             const ctx = canvas.getContext('2d');

