@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gauravhanna-spy
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        value: your_mongodb_atlas_uri_here
+      - key: PORT
+        value: 5000

