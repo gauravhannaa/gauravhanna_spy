@@ -76,16 +76,46 @@ mongoose.connection.on('disconnected', () => {
 
 // ========== ROUTES ==========
 // Safely require routes (skip if file missing)
-const routeFiles = ['auth', 'client', 'dashboard', 'data', 'admin']; // ✅ added 'admin'
+const routeFiles = ['auth', 'client', 'dashboard', 'data', 'admin'];
 
 routeFiles.forEach(route => {
   try {
+    // For auth route, ensure express-rate-limit is available
+    if (route === 'auth') {
+      try {
+        require('express-rate-limit');
+      } catch (err) {
+        console.error('❌ express-rate-limit package not found! Please run: npm install express-rate-limit');
+        throw new Error('Missing express-rate-limit package');
+      }
+    }
+    
     app.use(`/api/${route}`, require(`./routes/${route}`));
+    console.log(`✅ Loaded route /api/${route}`);
   } catch (err) {
     console.error(`❌ Failed to load route /api/${route}:`, err.message);
-    // Optional: add a dummy route to avoid 404s
+    console.error(`   Require stack:`, err.stack);
+    
+    // Add a dummy route to avoid 404s and provide helpful error message
     app.use(`/api/${route}`, (req, res) => {
-      res.status(503).json({ error: `Route ${route} not available` });
+      if (route === 'admin') {
+        res.status(503).json({ 
+          error: `Admin route not available`, 
+          message: 'Please create backend/routes/admin.js file',
+          required: 'Create admin routes file with proper exports'
+        });
+      } else if (route === 'auth') {
+        res.status(503).json({ 
+          error: `Auth route not available`, 
+          message: 'Please install express-rate-limit package',
+          fix: 'Run: npm install express-rate-limit'
+        });
+      } else {
+        res.status(503).json({ 
+          error: `Route ${route} not available`, 
+          message: err.message 
+        });
+      }
     });
   }
 });

