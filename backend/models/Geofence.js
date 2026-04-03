@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
 
 const GeofenceSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: { type: String, required: true },
   name: String,
   centerLat: Number,
   centerLng: Number,
   radius: Number,
-  triggerEvent: { type: String, enum: ['enter', 'exit'] },
-  timestamp: Date
+  triggerEvent: String,
+  timestamp: { type: Number, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Geofence', GeofenceSchema);
+module.exports = mongoose.models.Geofence || mongoose.model('Geofence', GeofenceSchema);

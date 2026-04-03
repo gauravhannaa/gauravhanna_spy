@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const ScreenshotSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: String,
   imageBase64: String,
-  timestamp: Date
+  timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Screenshot', ScreenshotSchema);
+module.exports = mongoose.models.Screenshot || mongoose.model('Screenshot', ScreenshotSchema);

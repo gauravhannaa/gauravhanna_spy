@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const PhotoSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
-  imageBase64: { type: String, required: true },
+  deviceId: String,
+  imageBase64: String,
   timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Photo', PhotoSchema);
+module.exports = mongoose.models.Photo || mongoose.model('Photo', PhotoSchema);

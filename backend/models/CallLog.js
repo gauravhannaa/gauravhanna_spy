@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
 const CallLogSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
-  contactName: String,
+  deviceId: String,
   phoneNumber: String,
-  callType: { type: String, enum: ['incoming', 'outgoing', 'missed'] },
+  contactName: String,
+  callType: String,
   duration: Number,
-  timestamp: Date,
-  recordingUrl: String   // optional
+  timestamp: Number,
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('CallLog', CallLogSchema);
+module.exports = mongoose.models.CallLog || mongoose.model('CallLog', CallLogSchema);

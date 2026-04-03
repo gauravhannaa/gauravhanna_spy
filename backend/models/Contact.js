@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const ContactSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: String,
   name: String,
   number: String,
-  email: String,
-  updatedAt: Date
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Contact', ContactSchema);
+module.exports = mongoose.models.Contact || mongoose.model('Contact', ContactSchema);

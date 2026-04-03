@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const KeylogSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: String,
   appPackage: String,
   text: String,
-  timestamp: Date
+  timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Keylog', KeylogSchema);
+module.exports = mongoose.models.Keylog || mongoose.model('Keylog', KeylogSchema);

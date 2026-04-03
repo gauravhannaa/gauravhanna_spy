@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
 const AppUsageSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: String,
   appPackage: String,
   appName: String,
-  foregroundTime: Number, // in seconds
-  timestamp: Date
+  foregroundTime: Number,
+  timestamp: Number,
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('AppUsage', AppUsageSchema);
+module.exports = mongoose.models.AppUsage || mongoose.model('AppUsage', AppUsageSchema);

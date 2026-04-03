@@ -9,11 +9,11 @@ import android.os.Build
 import android.util.Log
 
 class AlarmReceiver : BroadcastReceiver() {
-    
+
     companion object {
         private const val TAG = "AlarmReceiver"
         private const val ALARM_REQUEST_CODE = 1001
-        
+
         fun scheduleAlarm(context: Context) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, AlarmReceiver::class.java)
@@ -27,10 +27,10 @@ class AlarmReceiver : BroadcastReceiver() {
                     PendingIntent.FLAG_UPDATE_CURRENT
                 }
             )
-            
+
             // Schedule every hour
             val triggerTime = System.currentTimeMillis() + AlarmManager.INTERVAL_HOUR
-            
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
@@ -45,10 +45,10 @@ class AlarmReceiver : BroadcastReceiver() {
                     pendingIntent
                 )
             }
-            
+
             Log.d(TAG, "Alarm scheduled")
         }
-        
+
         fun cancelAlarm(context: Context) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, AlarmReceiver::class.java)
@@ -63,14 +63,15 @@ class AlarmReceiver : BroadcastReceiver() {
                 }
             )
             alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
             Log.d(TAG, "Alarm cancelled")
         }
     }
-    
+
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "Alarm triggered - Checking service status")
-        
-        // Ensure BackgroundService is running
+
+        // Check if BackgroundService is running
         if (BackgroundService.isNotRunning()) {
             Log.d(TAG, "BackgroundService not running, starting...")
             val serviceIntent = Intent(context, BackgroundService::class.java)
@@ -79,11 +80,17 @@ class AlarmReceiver : BroadcastReceiver() {
             } else {
                 context.startService(serviceIntent)
             }
+        } else {
+            Log.d(TAG, "BackgroundService is already running")
         }
-        
-        // Trigger data sync
-        DataCollector.forceSync(context)
-        
+
+        // Force sync data
+        try {
+            DataCollector.forceSync(context)
+        } catch (e: Exception) {
+            Log.e(TAG, "Force sync failed: ${e.message}")
+        }
+
         // Reschedule next alarm
         scheduleAlarm(context)
     }

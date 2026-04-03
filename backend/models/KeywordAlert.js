@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
 
 const KeywordAlertSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: { type: String, required: true },
   keyword: String,
   matchedText: String,
   app: String,
-  timestamp: Date
+  timestamp: { type: Number, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('KeywordAlert', KeywordAlertSchema);
+module.exports = mongoose.models.KeywordAlert || mongoose.model('KeywordAlert', KeywordAlertSchema);

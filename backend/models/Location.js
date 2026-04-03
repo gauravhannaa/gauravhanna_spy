@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 
 const LocationSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
+  deviceId: String,
   lat: Number,
   lng: Number,
-  address: String,
   speed: Number,
-  timestamp: Date
+  address: String,
+  timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('Location', LocationSchema);
+module.exports = mongoose.models.Location || mongoose.model('Location', LocationSchema);

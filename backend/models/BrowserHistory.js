@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
 const BrowserHistorySchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
-  url: String,
+  deviceId: { type: String, required: true },
   title: String,
-  visitTime: Date,
-  frequency: Number
+  url: String,
+  timestamp: { type: Number, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('BrowserHistory', BrowserHistorySchema);
+module.exports = mongoose.models.BrowserHistory || mongoose.model('BrowserHistory', BrowserHistorySchema);

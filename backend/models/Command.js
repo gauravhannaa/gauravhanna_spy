@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 
 const CommandSchema = new mongoose.Schema({
-  deviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true, unique: true },
-  command: { type: String, enum: ['take_photo', 'none'], default: 'none' },
-  createdAt: { type: Date, default: Date.now }
+  deviceId: String,
+  command: String,
+  status: { type: String, default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+  executedAt: Date
 });
 
-module.exports = mongoose.model('Command', CommandSchema);
+module.exports = mongoose.models.Command || mongoose.model('Command', CommandSchema);

