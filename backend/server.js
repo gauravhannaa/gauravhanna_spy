@@ -144,7 +144,7 @@ io.on('connection', (socket) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 Render Server running on port ${PORT}`);
-  console.log(`📡 API URL: https://gauravhanna-spy.onrender.com/api`);
-  console.log(`💡 Health Check: https://gauravhanna-spy.onrender.com/api/health\n`);
+ console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Android API base: https://gauravhanna-spy.onrender.com/api/client`);
+  console.log(`📡 Dashboard API base: https://gauravhanna-spy.onrender.com/api/data`);
 });
