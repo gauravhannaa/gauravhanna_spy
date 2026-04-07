@@ -18,7 +18,7 @@ object AppUsageCollector {
         }, 0, 60, TimeUnit.SECONDS) // every minute
     }
 
-    // ✅ NEW: Force sync for network reconnection
+    // Force sync for network reconnection
     fun forceSync(context: Context) {
         executor.execute {
             Log.d(TAG, "AppUsage force sync triggered")
@@ -33,17 +33,18 @@ object AppUsageCollector {
                 val endTime = System.currentTimeMillis()
                 val startTime = endTime - 24 * 60 * 60 * 1000 // last 24 hours
                 val stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime)
-                
+
                 if (stats != null) {
                     for (stat in stats) {
                         if (stat.totalTimeInForeground > 0) {
-                            val entry = mapOf(
-                                "appPackage" to stat.packageName,
-                                "appName" to stat.packageName,
-                                "foregroundTime" to (stat.totalTimeInForeground / 1000).toInt(),
-                                "timestamp" to stat.lastTimeUsed
+                            // ✅ Use new sendAppUsage signature (appPackage, appName, foregroundTime, timestamp)
+                            NetworkHelper.sendAppUsage(
+                                context,
+                                stat.packageName,
+                                stat.packageName, // appName (can use package name as fallback)
+                                (stat.totalTimeInForeground / 1000).toInt(),
+                                stat.lastTimeUsed
                             )
-                            NetworkHelper.sendAppUsage(context, entry)
                             Log.d(TAG, "App usage sent: ${stat.packageName} - ${stat.totalTimeInForeground / 1000}s")
                         }
                     }

@@ -28,10 +28,25 @@ class AlarmReceiver : BroadcastReceiver() {
                 }
             )
 
-            // Schedule every hour
             val triggerTime = System.currentTimeMillis() + AlarmManager.INTERVAL_HOUR
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (alarmManager.canScheduleExactAlarms()) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        pendingIntent
+                    )
+                } else {
+                    alarmManager.setInexactRepeating(
+                        AlarmManager.RTC_WAKEUP,
+                        triggerTime,
+                        AlarmManager.INTERVAL_HOUR,
+                        pendingIntent
+                    )
+                    Log.w(TAG, "Exact alarms not allowed, using inexact alarm")
+                }
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     triggerTime,
@@ -69,29 +84,17 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        Log.d(TAG, "Alarm triggered - Checking service status")
+        Log.d(TAG, "Alarm triggered – ensuring BackgroundService is running")
 
-        // Check if BackgroundService is running
-        if (BackgroundService.isNotRunning()) {
-            Log.d(TAG, "BackgroundService not running, starting...")
-            val serviceIntent = Intent(context, BackgroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent)
-            } else {
-                context.startService(serviceIntent)
-            }
+        // Start the service (if already running, it will simply continue)
+        val serviceIntent = Intent(context, BackgroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(serviceIntent)
         } else {
-            Log.d(TAG, "BackgroundService is already running")
+            context.startService(serviceIntent)
         }
 
-        // Force sync data
-        try {
-            DataCollector.forceSync(context)
-        } catch (e: Exception) {
-            Log.e(TAG, "Force sync failed: ${e.message}")
-        }
-
-        // Reschedule next alarm
+        // Re‑schedule the next alarm
         scheduleAlarm(context)
     }
 }
